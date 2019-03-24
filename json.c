@@ -315,22 +315,22 @@ error:
 	return -1;
 }
 
-int is_high_surrogate(unsigned utf16)
+static int is_high_surrogate(unsigned utf16)
 {
 	return (utf16 & 0xD800) == 0xD800;
 }
 
-int is_low_surrogate(unsigned utf16)
+static int is_low_surrogate(unsigned utf16)
 {
 	return (utf16 & 0xDC00) == 0xDC00;
 }
 
-long utf16_to_codepoint(unsigned utf16)
+static long utf16_to_codepoint(unsigned utf16)
 {
 	return utf16;
 }
 
-long utf16_pair_to_codepoint(unsigned high, unsigned low)
+static long utf16_pair_to_codepoint(unsigned high, unsigned low)
 {
 	return (high - 0xD800) * 0x400 + (low - 0xDC00) + 0x10000;
 }
@@ -545,8 +545,8 @@ error_brackets:
 	return -1;
 }
 
-int parse_after_elem(struct json_reader *reader, int endch, enum json_type type,
-	struct json_item *result)
+static int parse_after_elem(struct json_reader *reader, int endch,
+	enum json_type type, struct json_item *result)
 {
 	if (reader->buf[reader->head] != endch) {
 		set_error(reader, JSON_ERROR_BRACKETS);
@@ -558,7 +558,7 @@ int parse_after_elem(struct json_reader *reader, int endch, enum json_type type,
 	return 0;
 }
 
-int parse_colon(struct json_reader *reader)
+static int parse_colon(struct json_reader *reader)
 {
 	if (reader->buf[reader->head] != ':') {
 		set_error(reader, JSON_ERROR_EXPECTED_COLON);
