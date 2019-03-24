@@ -1,60 +1,42 @@
+#include "json.h"
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
 
-struct json_reader {
-	void         *(*alloc)(size_t);
-	void          (*free)(void *);
-	void         *(*resize)(void *, size_t);
-	int           (*refill)(char **buf, size_t *bufsiz, void *ctx);
-	char           *buf;
-	size_t          bufsiz;
-	void           *ctx;
-	size_t        	head;
-	char           *string;
-	char           *escaping;
-	unsigned char  *stack;
-	size_t        	stacksiz;
-	size_t        	stackcap;
-	int             flags;
-};
+int json_alloc(struct json_reader *reader, size_t stacksiz,
+	void *(*alloc)(size_t),
+	void  (*dealloc)(void *),
+	void *(*resize)(void *, size_t))
+{
+	reader->stackcap = stacksiz;
+	reader->stacksiz = 0;
+	reader->alloc = alloc;
+	reader->dealloc = dealloc;
+	reader->resize = resize;
+	reader->stack = reader->alloc(stacksiz);
+	if (!reader->stack) return -1;
+	return 0;
+}
 
-struct json_string {
-	unsigned char  *bytes;
-	size_t        	len;
-};
+void json_source(struct json_reader *reader, void *ctx,
+	int (*refill)(char **buf, size_t *bufsiz, void *ctx))
+{
+	reader->ctx = ctx;
+	reader->refill = refill;
+}
 
-enum json_type {
-	JSON_NULL,
-	JSON_MAP,
-	JSON_END_MAP,
-	JSON_LIST,
-	JSON_END_LIST,
-	JSON_STRING,
-	JSON_NUMBER,
-	JSON_BOOLEAN,
-	JSON_ERROR_MEMORY,
-	JSON_ERROR_NUMBER_FORMAT,
-	JSON_ERROR_TOKEN,
-	JSON_ERROR_EXPECTED_STRING,
-	JSON_ERROR_EXPECTED_COLON,
-	JSON_ERROR_BRACKETS,
-	JSON_ERROR_UNCLOSED_QUOTE,
-	JSON_ERROR_HEX
-};
+void json_init(struct json_reader *reader)
+{
+	reader->buf = NULL;
+	reader->bufsiz = 0;
+	reader->head = 0;
+	reader->flags = 0;
+}
 
-union json_data {
-	struct json_string str;
-	double             num;
-	int                boolean;
-	size_t             erridx;
-};
-
-struct json_item {
-	struct json_string key;
-	enum json_type     type;
-	union json_data    val;
-};
+void json_free(struct json_reader *reader)
+{
+	reader->dealloc(reader->stack);
+}
 
 enum frame {
 	FRAME_EMPTY,
@@ -64,6 +46,7 @@ enum frame {
 
 /* Flags for reader::flags */
 #define SOURCE_DEPLETED 0x0100
+
 
 static void set_error(struct json_reader *reader, enum json_type err)
 {
