@@ -176,6 +176,11 @@ static int next_char(struct json_reader *reader)
 	return -1;
 }
 
+static void reexamine_char(struct json_reader *reader)
+{
+	--reader->head;
+}
+
 #define NEXT_CHAR(reader, ch, do_fail) do { \
 	if (((ch)  = next_char((reader))) < 0) {do_fail;} \
 } while (0)
@@ -261,9 +266,11 @@ finish:
 	num *= sign;
 	result->type = JSON_NUMBER;
 	result->val.num = num;
+	reexamine_char(reader);
 	return -has_error(reader);
 
 error:
+	reexamine_char(reader);
 	if (reader->flags & SOURCE_DEPLETED)
 		set_error(reader, JSON_ERROR_NUMBER_FORMAT);
 	return -1;
