@@ -111,7 +111,7 @@ static int push_bytes(struct json_reader *reader, unsigned char **bytes,
 		*cap = new_cap;
 		*bytes = new_bytes;
 	}
-	memcpy(*bytes, buf, bufsiz);
+	memcpy(*bytes + *len, buf, bufsiz);
 	*len += bufsiz;
 	return 0;
 }
@@ -392,9 +392,9 @@ static long hex_short(const char hex[4])
 {
 	long num = 0;
 	unsigned shift = 0;
-	unsigned i;
-	for (i = 4, shift = 0; i >= 0; --i, shift += 4) {
-		int dig = toupper(hex[i]);
+	long i;
+	for (i = 3, shift = 0; i >= 0; --i, shift += 4) {
+		int dig = tolower(hex[i]);
 		long nibble;
 		if (dig >= '0' && dig <= '9') nibble = dig - '0';
 		else if (dig >= 'a' && dig <= 'f') nibble = 10 + dig - 'a';
@@ -407,11 +407,12 @@ static long hex_short(const char hex[4])
 static int escape_char(struct json_reader *reader, struct json_string *str,
 	size_t *cap)
 {
+	int read_extra_cp = 0, read_extra_escape = 0, read_extra = 0;
 	long utf16[2] = {-1, -1};
 	long codepoint, extracp = -1;
 	char utf8[4];
 	size_t utf8len;
-	char buf[6];
+	char buf[4];
 	long read;
 	int ch = next_char(reader);
 	if (ch < 0) goto error;
@@ -429,36 +430,50 @@ static int escape_char(struct json_reader *reader, struct json_string *str,
 		if (read < 4) goto hex_error;
 		utf16[0] = hex_short(buf);
 		if (utf16[0] < 0) goto hex_error;
+		codepoint = utf16_to_codepoint(utf16[0]);
 		if (is_high_surrogate(utf16[0])) {
-			read = next_string_chars(reader, buf, 6);
-			if (read < 0) goto error;
-			if (read < 6) goto hex_error;
-			if (buf[0] == '\\' && buf[1] == 'u') {
-				utf16[1] = hex_short(buf + 2);
-				if (utf16[1] < 0) goto hex_error;
-				if (is_low_surrogate(utf16[1])) {
-					codepoint = utf16_pair_to_codepoint(
-						utf16[0], utf16[1]);
-				} else {
-					codepoint =
-						utf16_to_codepoint(utf16[0]);
-					extracp = 
-						utf16_to_codepoint(utf16[1]);
-				}
+			NEXT_CHAR(reader, ch, goto error);
+			if (ch != '\\') {
+				read_extra = 1;
+				buf[0] = ch;
+				read = 1;
 			} else {
-				codepoint = utf16_to_codepoint(utf16[0]);
+				NEXT_CHAR(reader, ch, goto error);
+				if (ch == 'u') {
+					read = next_string_chars(reader, buf,
+						4);
+					if (read < 0) goto error;
+					if (read < 4) goto hex_error;
+					utf16[1] = hex_short(buf);
+					if (utf16[1] < 0) goto hex_error;
+					if (is_low_surrogate(utf16[1])) {
+						codepoint =
+							utf16_pair_to_codepoint(
+							utf16[0], utf16[1]);
+					} else {
+						read_extra_cp = 1;
+						extracp = utf16_to_codepoint(
+								utf16[1]);
+					}
+				} else {
+					reexamine_char(reader);
+					read_extra_escape = 1;
+				}
 			}
-		} else {
-			codepoint = utf16_to_codepoint(utf16[0]);
 		}
 		if (push_bytes(reader, &str->bytes, &str->len, cap,
 			(unsigned char *)utf8,
 			codepoint_to_utf8(codepoint, utf8))) goto error;
-		if (extracp >= 0) { /* We read an extra escape sequence. */
+		if (read_extra_cp) {
 			if (push_bytes(reader, &str->bytes, &str->len, cap,
 				(unsigned char *)utf8,
 				codepoint_to_utf8(extracp, utf8))) goto error;
-		} else if (read == 6) { /* We read 6 extra normal characters. */
+		} else if (read_extra_escape) {
+			/* This will only every recurse once, since it can only
+			 * do so for \uXXXX, but that is handled non-
+			 * recursively. */
+			if (escape_char(reader, str, cap)) goto error;
+		} else if (read_extra) {
 			if (push_bytes(reader, &str->bytes, &str->len, cap,
 					(unsigned char *)buf, read))
 				goto error;
