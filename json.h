@@ -16,6 +16,7 @@ struct json_reader {
 	size_t        	stacksiz;
 	size_t        	stackcap;
 	int             flags;
+	int             ending;
 };
 
 struct json_string {
@@ -24,6 +25,7 @@ struct json_string {
 };
 
 enum json_type {
+	JSON_EMPTY,
 	JSON_NULL,
 	JSON_MAP,
 	JSON_END_MAP,

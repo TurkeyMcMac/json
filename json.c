@@ -31,6 +31,7 @@ void json_init(struct json_reader *reader)
 	reader->bufsiz = 0;
 	reader->head = 0;
 	reader->flags = 0;
+	reader->ending = 0;
 }
 
 void json_free(struct json_reader *reader)
@@ -89,6 +90,8 @@ static int push_byte(struct json_reader *reader, unsigned char **bytes,
 		*cap = new_cap;
 		*bytes = new_bytes;
 	}
+	(*bytes)[*len] = ch;
+	++*len;
 	return 0;
 }
 
@@ -107,22 +110,28 @@ static int push_bytes(struct json_reader *reader, unsigned char **bytes,
 		*cap = new_cap;
 		*bytes = new_bytes;
 	}
+	memcpy(*bytes, buf, bufsiz);
+	*len += bufsiz;
 	return 0;
 }
 
-#define push_frame(reader, frame) push_byte((reader), &(reader)->stack, \
-	&(reader)->stacksiz, &(reader)->stackcap, (frame))
+static int push_frame(struct json_reader *reader, int frame)
+{
+	push_byte(reader, &reader->stack, &reader->stacksiz, &reader->stackcap,
+		frame);
+	return 0;
+}
 
 static int pop_frame(struct json_reader *reader)
 {
 	if (reader->stacksiz == 0) return FRAME_EMPTY;
-	return reader->stack[reader->stacksiz--];
+	return reader->stack[--reader->stacksiz];
 }
 
 static int peek_frame(const struct json_reader *reader)
 {
 	if (reader->stacksiz == 0) return FRAME_EMPTY;
-	return reader->stack[reader->stacksiz];
+	return reader->stack[reader->stacksiz - 1];
 }
 
 static int is_in_range(const struct json_reader *reader)
@@ -254,7 +263,7 @@ finish:
 	return -has_error(reader);
 
 error:
-	if (!(reader->flags & SOURCE_DEPLETED))
+	if (reader->flags & SOURCE_DEPLETED)
 		set_error(reader, JSON_ERROR_NUMBER_FORMAT);
 	return -1;
 }
@@ -436,6 +445,7 @@ static int parse_string(struct json_reader *reader, struct json_string *str)
 	char ch;
 	size_t cap = 16;
 	if (reader->buf[reader->head] != '"') goto error_expected_string;
+	++reader->head;
 	str->bytes = alloc(reader, cap);
 	if (!str->bytes) goto error;
 	str->len = 0;
@@ -482,7 +492,7 @@ static int parse_value(struct json_reader *reader, struct json_item *result)
 		++reader->head;
 		break;
 	case '{':
-		push_frame(reader, FRAME_LIST);
+		push_frame(reader, FRAME_MAP);
 		result->type = JSON_MAP;
 		++reader->head;
 		break;
@@ -493,6 +503,7 @@ static int parse_value(struct json_reader *reader, struct json_item *result)
 		break;
 	case '"':
 		if (parse_string(reader, &result->val.str)) goto error;
+		result->type = JSON_STRING;
 		break;
 	default:
 		if (parse_token_value(reader, result)) goto error;
@@ -529,15 +540,18 @@ error_brackets:
 }
 
 static int parse_after_elem(struct json_reader *reader, int endch,
-	enum json_type type, struct json_item *result)
+	enum json_type type)
 {
-	if (reader->buf[reader->head] != endch) {
+	if (reader->buf[reader->head] == ',') {
+		++reader->head;
+	} else if (reader->buf[reader->head] == endch) {
+		reader->ending = type;
+		pop_frame(reader);
+		++reader->head;
+	} else {
 		set_error(reader, JSON_ERROR_BRACKETS);
 		return -1;
 	}
-	++reader->head;
-	pop_frame(reader);
-	result->type = type;
 	return 0;
 }
 
@@ -553,17 +567,29 @@ static int parse_colon(struct json_reader *reader)
 
 int json_read_item(struct json_reader *reader, struct json_item *result)
 {
-	if (!is_in_range(reader) && refill(reader)) goto error;
+	if (reader->ending) {
+		result->type = reader->ending;
+		reader->ending = 0;
+		return 0;
+	}
+	if (!is_in_range(reader)) {
+		if (reader->flags & SOURCE_DEPLETED) {
+			result->type = JSON_EMPTY;
+			return 0;
+		} else if (refill(reader)) {
+			goto error;
+		}
+	}
 	switch (peek_frame(reader)) {
 	case FRAME_EMPTY:
 		skip_spaces(reader) ||
-		parse_item(reader, result);
+		parse_value(reader, result);
 		break;
 	case FRAME_LIST:
 		skip_spaces(reader) ||
 		parse_value(reader, result) ||
 		skip_spaces(reader) ||
-		parse_after_elem(reader, ']', JSON_END_LIST, result);
+		parse_after_elem(reader, ']', JSON_END_LIST);
 		break;
 	case FRAME_MAP:
 		skip_spaces(reader) ||
@@ -573,7 +599,7 @@ int json_read_item(struct json_reader *reader, struct json_item *result)
 		skip_spaces(reader) ||
 		parse_value(reader, result) ||
 		skip_spaces(reader) ||
-		parse_after_elem(reader, '}', JSON_END_MAP, result);
+		parse_after_elem(reader, '}', JSON_END_MAP);
 		break;
 	}
 	if (has_error(reader)) goto error;
