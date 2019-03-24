@@ -189,6 +189,7 @@ static long next_chars(struct json_reader *reader, char *buf, size_t bufsiz)
 {
 	if (reader->head + bufsiz <= reader->bufsiz) {
 		memcpy(buf, reader->buf + reader->head, bufsiz);
+		reader->head += bufsiz;
 	} else {
 		size_t i;
 		size_t easy_copy = reader->bufsiz - reader->head;
@@ -198,6 +199,34 @@ static long next_chars(struct json_reader *reader, char *buf, size_t bufsiz)
 			char ch = next_char(reader);
 			if (ch < 0)
 				return reader->flags & SOURCE_DEPLETED ? i : -1;
+			buf[i] = ch;
+		}
+	}
+	return bufsiz;
+}
+
+static long next_string_chars(struct json_reader *reader, char *buf,
+	size_t bufsiz)
+{
+	if (reader->head + bufsiz <= reader->bufsiz) {
+		char *looking = reader->buf + reader->head;
+		char *quote = memchr(looking, '"', bufsiz);
+		if (quote) bufsiz = (size_t)(looking - quote);
+		memcpy(buf, reader->buf + reader->head, bufsiz);
+		reader->head += bufsiz;
+	} else {
+		size_t i;
+		size_t easy_copy = reader->bufsiz - reader->head;
+		memcpy(buf, reader->buf + reader->head, easy_copy);
+		if (refill(reader)) return -1;
+		for (i = easy_copy; i < bufsiz; ++i) {
+			char ch = next_char(reader);
+			if (ch < 0)
+				return reader->flags & SOURCE_DEPLETED ? i : -1;
+			if (ch == '"') {
+				reexamine_char(reader);
+				return i;
+			}
 			buf[i] = ch;
 		}
 	}
@@ -395,13 +424,13 @@ static int escape_char(struct json_reader *reader, struct json_string *str,
 	case '"': ch =  '"'; break;
 	case'\\':            break;
 	case 'u':
-		read = next_chars(reader, buf, 4);
+		read = next_string_chars(reader, buf, 4);
 		if (read < 0) goto error;
 		if (read < 4) goto hex_error;
 		utf16[0] = hex_short(buf);
 		if (utf16[0] < 0) goto hex_error;
 		if (is_high_surrogate(utf16[0])) {
-			read = next_chars(reader, buf, 6);
+			read = next_string_chars(reader, buf, 6);
 			if (read < 0) goto error;
 			if (read < 6) goto hex_error;
 			if (buf[0] == '\\' && buf[1] == 'u') {
