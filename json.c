@@ -209,7 +209,8 @@ static int parse_number(struct json_reader *reader, struct json_item *result)
 	int status = -1;
 	double num = 0.0;
 	double sign = 1.0;
-	int ch = reader->buf[reader->head];
+	int ch;
+	NEXT_CHAR(reader, ch, goto error);
 	if (ch == '-') {
 		sign = -1.0;
 		NEXT_CHAR(reader, ch, goto error);
