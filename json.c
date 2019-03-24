@@ -256,11 +256,11 @@ static int parse_number(struct json_reader *reader, struct json_item *result)
 			exponent *= 10;
 			exponent += ch - '0';
 			NEXT_CHAR(reader, ch,
-				num = pow(num, exponent);
+				num *= pow(10, exponent);
 				goto finish;
 			);
 		}
-		num = pow(num, exponent);
+		num *= pow(10, exponent);
 	}
 	if (status) goto error;
 finish:
