@@ -264,11 +264,11 @@ static int parse_number(struct json_reader *reader, struct json_item *result)
 		num *= pow(10, exponent);
 	}
 	if (status) goto error;
+	reexamine_char(reader);
 finish:
 	num *= sign;
 	result->type = JSON_NUMBER;
 	result->val.num = num;
-	reexamine_char(reader);
 	return -has_error(reader);
 
 error:
