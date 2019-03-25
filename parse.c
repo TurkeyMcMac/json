@@ -35,8 +35,9 @@ int main(int argc, char *argv[])
 	json_source(&rdr, file, refill);
 	json_init(&rdr);
 	do {
-		json_read_item(&rdr, &item);
-		if (item.type > JSON_BOOLEAN) return item.type;
+		if (json_read_item(&rdr, &item) < 0) {
+			return item.type;
+		}
 	} while (item.type != JSON_EMPTY);
 	return 0;
 }
