@@ -549,33 +549,11 @@ static int parse_value(struct json_reader *reader, struct json_item *result)
 		break;
 	default:
 		if (parse_token_value(reader, result)) goto error;
+		break;
 	}
 	return 0;
 
 error:
-	return -1;
-}
-
-static int parse_item(struct json_reader *reader, struct json_item *result)
-{
-	switch (reader->buf[reader->head]) {
-	case ']':
-		if (pop_frame(reader) != FRAME_LIST) goto error_brackets;
-		result->type = JSON_END_LIST;
-		++reader->head;
-		break;
-	case '}':
-		if (pop_frame(reader) != FRAME_MAP) goto error_brackets;
-		result->type = JSON_END_MAP;
-		++reader->head;
-		break;
-	default:
-		return parse_value(reader, result);
-	}
-	return 0;
-
-error_brackets:
-	set_error(reader, JSON_ERROR_BRACKETS);
 	return -1;
 }
 
