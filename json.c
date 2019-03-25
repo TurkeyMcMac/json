@@ -506,7 +506,7 @@ static int parse_string(struct json_reader *reader, struct json_string *str)
 		if (ch < 0) {
 			if (reader->flags & SOURCE_DEPLETED)
 				goto error_unclosed_quote;
-			else
+			else if (refill(reader))
 				goto error;
 		}
 		if (ch == '\\') {
@@ -627,9 +627,9 @@ int json_read_item(struct json_reader *reader, struct json_item *result)
 	}
 	switch (peek_frame(reader)) {
 	case FRAME_EMPTY:
-		skip_spaces(reader) ||
-		parse_value(reader, result);
-		break;
+		if (skip_spaces(reader)) goto error;
+		if (is_in_range(reader)) parse_value(reader, result);
+		return 0;
 	case FRAME_LIST:
 		if (!(reader->flags & STARTED_COMPOUND)) {
 			if (skip_spaces(reader)
