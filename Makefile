@@ -13,7 +13,7 @@ $(parse-exe): $(header) $(json) $(parse)
 	$(CC) $(c-flags) -o $@ $(parse) $(json) $(linkage)
 
 $(test-results): $(parse-exe)
-	./run-tests $(test-dir) > $@
+	./run-tests $(test-dir) | sort > $@
 
 .PHONY: test
 test: $(test-results)
