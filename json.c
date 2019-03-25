@@ -310,27 +310,24 @@ static int parse_token_value(struct json_reader *reader,
 	struct json_item *result)
 {
 	double num;
-	int errnum;
-	char tokbuf[4];
+	long read;
+	char tokbuf[5];
 	switch (reader->buf[reader->head]) {
 	case 't': /* true */
-		errnum = next_chars(reader, tokbuf, 3);
-		if (errnum) goto error;
-		if (memcmp(tokbuf, "rue", 3)) goto error_invalid;
+		if ((read = next_chars(reader, tokbuf, 4)) < 0) goto error;
+		if (read < 4 || memcmp(tokbuf, "true", 4)) goto error_invalid;
 		result->type = JSON_BOOLEAN;
 		result->val.boolean = 1;
 		break;
 	case 'f': /* false */
-		errnum = next_chars(reader, tokbuf, 4);
-		if (errnum) goto error;
-		if (memcmp(tokbuf, "alse", 4)) goto error_invalid;
+		if ((read = next_chars(reader, tokbuf, 5)) < 0) goto error;
+		if (read < 5 || memcmp(tokbuf, "false", 5)) goto error_invalid;
 		result->type = JSON_BOOLEAN;
 		result->val.boolean = 0;
 		break;
 	case 'n': /* null */
-		errnum = next_chars(reader, tokbuf, 3);
-		if (errnum) goto error;
-		if (memcmp(tokbuf, "ull", 3)) goto error_invalid;
+		if ((read = next_chars(reader, tokbuf, 4)) < 0) goto error;
+		if (read < 4 || memcmp(tokbuf, "null", 4)) goto error_invalid;
 		result->type = JSON_NULL;
 		break;
 	default: /* number */
