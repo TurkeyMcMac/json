@@ -1,27 +1,5 @@
 #!/usr/bin/env perl
-
-sub report {
-	my ($test, $exit) = @_;
-	my $test_type = substr($test, 0, 1);
-	my $zero, $nonzero;
-	if ($test_type eq 'y') {
-		$zero = "SUCCEEDED";
-		$nonzero = "FAILED";
-	} elsif ($test_type eq 'n') {
-		$nonzero = "SUCCEEDED";
-		$zero = "FAILED";
-	} else {
-		$nonzero = "SUCCEEDED";
-		$zero = "SUCCEEDED";
-	}
-	my $result;
-	if ($exit) {
-		$result = $nonzero;
-	} else {
-		$result = $zero;
-	}
-	printf "%s\t%s\t%03d\n", $test, $result, $exit;
-}
+use strict;
 
 my $dirname = @ARGV[0];
 
@@ -55,13 +33,13 @@ while (my ($file, $pid) = (each %tests)) {
 	alarm 1;
 	waitpid $pid, 0;
 	alarm 0;
-	my $result, $exit;
+	my ($result, $exit);
 	if ($timed_out) {
 		$result = "TIMED OUT";
 		$exit = 128 + $kill_signal;
 	} else {
 		my $test_type = substr($file, 0, 1);
-		my $zero, $nonzero;
+		my ($zero, $nonzero);
 		if ($test_type eq 'y') {
 			$zero = "SUCCEEDED";
 			$nonzero = "FAILED";
