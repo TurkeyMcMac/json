@@ -156,7 +156,6 @@ static int refill(struct json_reader *reader)
 
 static int skip_spaces(struct json_reader *reader)
 {
-	int errnum = 0;
 	for (;;) {
 		while (is_in_range(reader)) {
 			if (!isspace(reader->buf[reader->head])) return 0;
@@ -281,7 +280,6 @@ error:
 static int parse_token_value(struct json_reader *reader,
 	struct json_item *result)
 {
-	double num;
 	long read;
 	char tokbuf[5];
 	switch (reader->buf[reader->head]) {
@@ -380,7 +378,6 @@ static int escape_char(struct json_reader *reader, struct json_string *str,
 	long utf16[2] = {-1, -1};
 	long codepoint, extracp = -1;
 	char utf8[4];
-	size_t utf8len;
 	char buf[4];
 	long read;
 	int ch = next_char(reader);
