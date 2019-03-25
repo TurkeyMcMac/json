@@ -20,4 +20,4 @@ test: $(test-results)
 
 .PHONY: clean
 clean:
-	$(RM) $(parse-exe)
+	$(RM) $(parse-exe) $(test-results)
