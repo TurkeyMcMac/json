@@ -1,0 +1,83 @@
+#!/usr/bin/env perl
+
+sub report {
+	my ($test, $exit) = @_;
+	my $test_type = substr($test, 0, 1);
+	my $zero, $nonzero;
+	if ($test_type eq 'y') {
+		$zero = "SUCCEEDED";
+		$nonzero = "FAILED";
+	} elsif ($test_type eq 'n') {
+		$nonzero = "SUCCEEDED";
+		$zero = "FAILED";
+	} else {
+		$nonzero = "SUCCEEDED";
+		$zero = "SUCCEEDED";
+	}
+	my $result;
+	if ($exit) {
+		$result = $nonzero;
+	} else {
+		$result = $zero;
+	}
+	printf "%s\t%s\t%03d\n", $test, $result, $exit;
+}
+
+my $dirname = @ARGV[0];
+
+my %tests;
+
+print "TEST\tRESULT\tEXIT CODE\n";
+
+my @files;
+opendir(DIR, $dirname) or die "Unable to open directory '$dirname'";
+@files = grep {/^[^.]/} readdir(DIR);
+closedir(DIR);
+foreach my $file (@files) {
+	my $pid = fork();
+	if ($pid == 0) {
+		chdir $dirname;
+		exec("../parse", $file);
+	} elsif ($pid  > 0) {
+		$tests{$file} = $pid;
+	} else {
+		print STDERR "Skipping '$file'; fork failed\n";
+	}
+}
+
+while (my ($file, $pid) = (each %tests)) {
+	my $kill_signal = 15;
+	my $timed_out = 0;
+	$SIG{'ALRM'} = sub {
+		$timed_out = 1;
+		kill $kill_signal, $pid;
+	};
+	alarm 1;
+	waitpid $pid, 0;
+	alarm 0;
+	my $result, $exit;
+	if ($timed_out) {
+		$result = "TIMED OUT";
+		$exit = 128 + $kill_signal;
+	} else {
+		my $test_type = substr($file, 0, 1);
+		my $zero, $nonzero;
+		if ($test_type eq 'y') {
+			$zero = "SUCCEEDED";
+			$nonzero = "FAILED";
+		} elsif ($test_type eq 'n') {
+			$nonzero = "SUCCEEDED";
+			$zero = "FAILED";
+		} else {
+			$nonzero = "SUCCEEDED";
+			$zero = "SUCCEEDED";
+		}
+		$exit = $? >> 8;
+		if ($exit) {
+			$result = $nonzero;
+		} else {
+			$result = $zero;
+		}
+	}
+	printf "%s\t%s\t%03d\n", $file, $result, $exit;
+}
