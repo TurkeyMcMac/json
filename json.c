@@ -529,16 +529,29 @@ error:
 	return -1;
 }
 
+static int try_compound_end(struct json_reader *reader, int endch,
+	enum json_type type, struct json_item *result)
+{
+	int ch;
+	NEXT_CHAR(reader, ch, return -1);
+	if (ch == endch) {
+		pop_frame(reader);
+		result->type = type;
+	} else {
+		reexamine_char(reader);
+	}
+	return 0;
+}
+
 static int parse_after_elem(struct json_reader *reader, int endch,
 	enum json_type type, struct json_item *result)
 {
-	if (reader->buf[reader->head] == ',') {
-		++reader->head;
-	} else if (reader->buf[reader->head] == endch) {
+	int ch;
+	NEXT_CHAR(reader, ch, return -1);
+	if (ch == endch) {
 		pop_frame(reader);
 		result->type = type;
-		++reader->head;
-	} else {
+	} else if (ch != ',') {
 		set_error(reader, JSON_ERROR_BRACKETS);
 		return -1;
 	}
@@ -578,24 +591,30 @@ int json_read_item(struct json_reader *reader, struct json_item *result)
 		if (is_in_range(reader)) parse_value(reader, result);
 		return 0;
 	case FRAME_LIST:
-		if (!(reader->flags & STARTED_COMPOUND)) {
-			if (skip_spaces(reader)
-			 || parse_after_elem(reader, ']', JSON_END_LIST,
+		if (skip_spaces(reader)) goto error;
+		if (reader->flags & STARTED_COMPOUND) {
+			if (try_compound_end(reader, ']', JSON_END_LIST,
 				result)) goto error;
-			if (result->type == JSON_END_LIST) return 0;
+			reader->flags &= ~STARTED_COMPOUND;
+		} else {
+			if (parse_after_elem(reader, ']', JSON_END_LIST,
+				result)) goto error;
 		}
-		reader->flags &= ~STARTED_COMPOUND;
+		if (result->type == JSON_END_LIST) return 0;
 		skip_spaces(reader) ||
 		parse_value(reader, result);
 		break;
 	case FRAME_MAP:
-		if (!(reader->flags & STARTED_COMPOUND)) {
-			if (skip_spaces(reader)
-			 || parse_after_elem(reader, '}', JSON_END_MAP, result))
+		if (skip_spaces(reader)) goto error;
+		if (reader->flags & STARTED_COMPOUND) {
+			if (try_compound_end(reader, '}', JSON_END_MAP,result))
 				goto error;
-			if (result->type == JSON_END_MAP) return 0;
+			reader->flags &= ~STARTED_COMPOUND;
+		} else {
+			if (parse_after_elem(reader, '}', JSON_END_MAP, result))
+				goto error;
 		}
-		reader->flags &= ~STARTED_COMPOUND;
+		if (result->type == JSON_END_MAP) return 0;
 		skip_spaces(reader) ||
 		parse_string(reader, &result->key) ||
 		skip_spaces(reader) ||
