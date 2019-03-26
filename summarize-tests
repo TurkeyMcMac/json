@@ -1,0 +1,34 @@
+#!/usr/bin/env perl
+
+sub report_stat {
+	my ($name, $count, $total) = @_;
+	printf("%s: %d (%.0f%%)\n", $name, $count, $count / $total * 100);
+}
+
+my $file = $ARGV[0];
+
+open my $input, "<", $file or die "Unable to open file '$file'";
+my $n_tests = 0;
+my $n_successes = 0;
+my $n_failures = 0;
+my $n_ignored = 0;
+my $n_timed_out = 0;
+while (my $line = <$input>) {
+	if ($line =~ m/^([yni])_.+\t(SUCCEEDED|FAILED|TIMED OUT)\t\d{3}\n/) {
+		++$n_tests;
+		if ($2 eq "TIMED OUT") {
+			++$n_timed_out;
+		} elsif ($1 eq "i") {
+			++$n_ignored;
+		} elsif ($2 eq "SUCCEEDED") {
+			++$n_successes;
+		} else {
+			++$n_failures;
+		}
+	}
+}
+print "Total tests: $n_tests\n";
+report_stat("Successes", $n_successes, $n_tests);
+report_stat("Failures", $n_failures, $n_tests);
+report_stat("Timed out", $n_timed_out, $n_tests);
+report_stat("Ignored", $n_ignored, $n_tests);
