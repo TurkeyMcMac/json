@@ -572,7 +572,7 @@ int json_read_item(struct json_reader *reader, struct json_item *result)
 	result->key.bytes = NULL;
 	if (!is_in_range(reader)) {
 		if (reader->flags & SOURCE_DEPLETED) {
-			return 0;
+			return reader->stacksiz == 0 ? 0 : -1;
 		} else if (refill(reader)) {
 			goto error;
 		}
