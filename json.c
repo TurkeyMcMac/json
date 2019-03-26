@@ -48,6 +48,11 @@ enum frame {
 #define SOURCE_DEPLETED  0x0100
 #define STARTED_COMPOUND 0x0200
 
+static int is_space(int ch)
+{
+	return ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r'
+		|| ch == '\v';
+}
 
 static void set_error(struct json_reader *reader, enum json_type err)
 {
@@ -157,7 +162,7 @@ static int skip_spaces(struct json_reader *reader)
 {
 	for (;;) {
 		while (is_in_range(reader)) {
-			if (!isspace(reader->buf[reader->head])) return 0;
+			if (!is_space(reader->buf[reader->head])) return 0;
 			++reader->head;
 		}
 		if (reader->flags & SOURCE_DEPLETED) return 0;

@@ -221,7 +221,7 @@ n_structure_unclosed_array_unfinished_true.json	SUCCEEDED	011
 n_structure_unclosed_object.json	SUCCEEDED	014
 n_structure_unicode-identifier.json	SUCCEEDED	010
 n_structure_whitespace_U+2060_word_joiner.json	SUCCEEDED	010
-n_structure_whitespace_formfeed.json	FAILED	000
+n_structure_whitespace_formfeed.json	SUCCEEDED	010
 y_array_arraysWithSpaces.json	SUCCEEDED	000
 y_array_empty-string.json	SUCCEEDED	000
 y_array_empty.json	SUCCEEDED	000
