@@ -197,7 +197,8 @@ static long next_chars(struct json_reader *reader, char *buf, size_t bufsiz)
 		for (i = easy_copy; i < bufsiz; ++i) {
 			char ch = next_char(reader);
 			if (ch < 0)
-				return reader->flags & SOURCE_DEPLETED ? i : -1;
+				return reader->flags & SOURCE_DEPLETED ?
+					(long)i : -1;
 			buf[i] = ch;
 		}
 	}
@@ -256,11 +257,11 @@ static int parse_number(struct json_reader *reader, struct json_item *result)
 			exponent *= 10;
 			exponent += ch - '0';
 			NEXT_CHAR(reader, ch,
-				num *= pow(10, exponent);
+				num *= pow(expsign * 10, exponent);
 				goto finish;
 			);
 		}
-		num *= pow(10, exponent);
+		num *= pow(expsign * 10, exponent);
 	}
 	if (status) goto error;
 	reexamine_char(reader);
@@ -598,8 +599,10 @@ int json_read_item(struct json_reader *reader, struct json_item *result)
 				result)) goto error;
 		}
 		if (result->type == JSON_END_LIST) return 0;
-		skip_spaces(reader) ||
-		parse_value(reader, result);
+		(void)(
+			skip_spaces(reader) ||
+			parse_value(reader, result)
+		);
 		break;
 	case FRAME_MAP:
 		if (skip_spaces(reader)) goto error;
@@ -612,12 +615,14 @@ int json_read_item(struct json_reader *reader, struct json_item *result)
 				goto error;
 		}
 		if (result->type == JSON_END_MAP) return 0;
-		skip_spaces(reader) ||
-		parse_string(reader, &result->key) ||
-		skip_spaces(reader) ||
-		parse_colon(reader) ||
-		skip_spaces(reader) ||
-		parse_value(reader, result);
+		(void)(
+			skip_spaces(reader) ||
+			parse_string(reader, &result->key) ||
+			skip_spaces(reader) ||
+			parse_colon(reader) ||
+			skip_spaces(reader) ||
+			parse_value(reader, result)
+		);
 		break;
 	}
 	if (has_error(reader)) goto error;
