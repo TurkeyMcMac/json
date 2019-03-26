@@ -31,7 +31,6 @@ void json_init(struct json_reader *reader)
 	reader->bufsiz = 0;
 	reader->head = 0;
 	reader->flags = 0;
-	reader->ending = 0;
 }
 
 void json_free(struct json_reader *reader)
@@ -571,11 +570,6 @@ int json_read_item(struct json_reader *reader, struct json_item *result)
 	result->type = JSON_EMPTY;
 	result->key.len = 0;
 	result->key.bytes = NULL;
-	if (reader->ending) {
-		result->type = reader->ending;
-		reader->ending = 0;
-		return 0;
-	}
 	if (!is_in_range(reader)) {
 		if (reader->flags & SOURCE_DEPLETED) {
 			return 0;

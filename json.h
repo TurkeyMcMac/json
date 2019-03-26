@@ -16,7 +16,6 @@ struct json_reader {
 	size_t        	stacksiz;
 	size_t        	stackcap;
 	int             flags;
-	int             ending;
 };
 
 struct json_string {
