@@ -461,7 +461,7 @@ error:
 
 static int parse_string(struct json_reader *reader, struct json_string *str)
 {
-	char ch;
+	int ch;
 	size_t cap = 16;
 	if (reader->buf[reader->head] != '"') goto error_expected_string;
 	++reader->head;
