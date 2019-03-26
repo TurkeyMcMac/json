@@ -1,7 +1,6 @@
 #include "json.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 
 #define ERROR_CLI  255
 
@@ -9,7 +8,7 @@ int refill(char **buf, size_t *size, void *ctx)
 {
 	FILE *file = ctx;
 	if (!*buf) {
-		*size = rand() % BUFSIZ + 1;
+		*size = BUFSIZ;
 		if (!(*buf = malloc(*size))) return -1;
 	}
 	*size = fread(*buf, 1, *size, file);
@@ -25,7 +24,6 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "Usage: parse <file>\n");
 		return ERROR_CLI;
 	}
-	srand(getpid());
 	file = fopen(argv[1], "r");
 	if (!file) {
 		fprintf(stderr, "unable to open file '%s'\n", argv[1]);
