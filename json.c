@@ -234,11 +234,18 @@ static int parse_number(struct json_reader *reader, struct json_item *result)
 		double fraction = 0.0;
 		status = -1;
 		NEXT_CHAR(reader, ch, goto error);
-		while (isdigit(ch)) {
+		if (isdigit(ch)) {
 			status = 0;
-			fraction += ch - '0';
-			fraction /= 10;
-			NEXT_CHAR(reader, ch, num += fraction; goto finish);
+			do {
+				fraction += ch - '0';
+				fraction /= 10;
+				NEXT_CHAR(reader, ch,
+					num += fraction;
+					goto finish);
+			} while (isdigit(ch));
+		} else {
+			set_error(reader, JSON_ERROR_NUMBER_FORMAT);
+			goto error;
 		}
 		num += fraction;
 	}

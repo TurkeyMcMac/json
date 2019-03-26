@@ -76,7 +76,7 @@ n_number_.2e-3.json	SUCCEEDED	010
 n_number_0.1.2.json	SUCCEEDED	014
 n_number_0.3e+.json	SUCCEEDED	010
 n_number_0.3e.json	SUCCEEDED	010
-n_number_0.e1.json	FAILED	000
+n_number_0.e1.json	SUCCEEDED	010
 n_number_0_capital_E+.json	SUCCEEDED	010
 n_number_0_capital_E.json	SUCCEEDED	010
 n_number_0e+.json	SUCCEEDED	010
@@ -86,9 +86,9 @@ n_number_1.0e-.json	SUCCEEDED	010
 n_number_1.0e.json	SUCCEEDED	010
 n_number_1_000.json	SUCCEEDED	014
 n_number_1eE2.json	SUCCEEDED	010
-n_number_2.e+3.json	FAILED	000
-n_number_2.e-3.json	FAILED	000
-n_number_2.e3.json	FAILED	000
+n_number_2.e+3.json	SUCCEEDED	010
+n_number_2.e-3.json	SUCCEEDED	010
+n_number_2.e3.json	SUCCEEDED	010
 n_number_9.e+.json	SUCCEEDED	010
 n_number_Inf.json	SUCCEEDED	010
 n_number_NaN.json	SUCCEEDED	010
