@@ -170,7 +170,8 @@ static int next_char(struct json_reader *reader)
 	while (!is_in_range(reader) && (reader->flags & SOURCE_DEPLETED) == 0) {
 		if (refill(reader)) return -1;
 	}
-	if (is_in_range(reader)) return reader->buf[reader->head++];
+	if (is_in_range(reader))
+		return (unsigned char)reader->buf[reader->head++];
 	return -1;
 }
 
