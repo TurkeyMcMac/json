@@ -72,7 +72,7 @@ n_number_-1.0..json	SUCCEEDED	014
 n_number_-2..json	SUCCEEDED	010
 n_number_-NaN.json	SUCCEEDED	010
 n_number_.-1.json	SUCCEEDED	010
-n_number_.2e-3.json	FAILED	000
+n_number_.2e-3.json	SUCCEEDED	010
 n_number_0.1.2.json	SUCCEEDED	014
 n_number_0.3e+.json	SUCCEEDED	010
 n_number_0.3e.json	SUCCEEDED	010
@@ -106,12 +106,12 @@ n_number_minus_infinity.json	SUCCEEDED	010
 n_number_minus_sign_with_trailing_garbage.json	SUCCEEDED	010
 n_number_minus_space_1.json	SUCCEEDED	010
 n_number_neg_int_starting_with_zero.json	SUCCEEDED	014
-n_number_neg_real_without_int_part.json	FAILED	000
+n_number_neg_real_without_int_part.json	SUCCEEDED	010
 n_number_neg_with_garbage_at_end.json	SUCCEEDED	014
 n_number_real_garbage_after_e.json	SUCCEEDED	010
 n_number_real_with_invalid_utf8_after_e.json	SUCCEEDED	010
 n_number_real_without_fractional_part.json	SUCCEEDED	010
-n_number_starting_with_dot.json	FAILED	000
+n_number_starting_with_dot.json	SUCCEEDED	010
 n_number_with_alpha.json	SUCCEEDED	014
 n_number_with_alpha_char.json	SUCCEEDED	014
 n_number_with_leading_zero.json	SUCCEEDED	014

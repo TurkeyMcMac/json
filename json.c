@@ -219,13 +219,16 @@ static int parse_number(struct json_reader *reader, struct json_item *result)
 	if (ch == '0') {
 		status = 0;
 		NEXT_CHAR(reader, ch, goto finish);
-	} else {
-		while (isdigit(ch)) {
-			status = 0;
+	} else if (isdigit(ch)) {
+		status = 0;
+		do {
 			num *= 10;
 			num += ch - '0';
 			NEXT_CHAR(reader, ch, goto finish);
-		}
+		} while (isdigit(ch));
+	} else {
+		set_error(reader, JSON_ERROR_NUMBER_FORMAT);
+		goto error;
 	}
 	if (ch == '.') {
 		double fraction = 0.0;
