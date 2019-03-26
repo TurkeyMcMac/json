@@ -262,7 +262,10 @@ static int parse_number(struct json_reader *reader, struct json_item *result)
 		}
 		num *= pow(expsign * 10, exponent);
 	}
-	if (status) goto error;
+	if (status) {
+		set_error(reader, JSON_ERROR_NUMBER_FORMAT);
+		goto error;
+	}
 	reexamine_char(reader);
 finish:
 	num *= sign;
@@ -580,7 +583,8 @@ int json_read_item(struct json_reader *reader, struct json_item *result)
 	switch (peek_frame(reader)) {
 	case FRAME_EMPTY:
 		if (skip_spaces(reader)) goto error;
-		if (is_in_range(reader)) parse_value(reader, result);
+		if (is_in_range(reader) && parse_value(reader, result))
+			goto error;
 		return 0;
 	case FRAME_LIST:
 		if (skip_spaces(reader)) goto error;
