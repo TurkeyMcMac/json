@@ -143,7 +143,7 @@ n_object_unquoted_key.json	SUCCEEDED	012
 n_object_unterminated-value.json	SUCCEEDED	015
 n_object_with_single_string.json	SUCCEEDED	013
 n_object_with_trailing_garbage.json	SUCCEEDED	010
-n_single_space.json	FAILED	000
+n_single_space.json	SUCCEEDED	064
 n_string_1_surrogate_then_escape.json	SUCCEEDED	015
 n_string_1_surrogate_then_escape_u.json	SUCCEEDED	016
 n_string_1_surrogate_then_escape_u1.json	SUCCEEDED	016
@@ -190,7 +190,7 @@ n_structure_end_array.json	SUCCEEDED	010
 n_structure_incomplete_UTF8_BOM.json	SUCCEEDED	010
 n_structure_lone-invalid-utf-8.json	SUCCEEDED	010
 n_structure_lone-open-bracket.json	SUCCEEDED	014
-n_structure_no_data.json	FAILED	000
+n_structure_no_data.json	SUCCEEDED	064
 n_structure_null-byte-outside-string.json	SUCCEEDED	010
 n_structure_number_with_trailing_garbage.json	SUCCEEDED	010
 n_structure_object_followed_by_closing_object.json	SUCCEEDED	010

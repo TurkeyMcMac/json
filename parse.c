@@ -2,7 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define ERROR_CLI  255
+#define ERROR_COMPLETELY_EMPTY  64
+#define ERROR_CLI               65
 
 int refill(char **buf, size_t *size, void *ctx)
 {
@@ -17,6 +18,7 @@ int refill(char **buf, size_t *size, void *ctx)
 
 int main(int argc, char *argv[])
 {
+	int completely_empty = 1;
 	int last_was_empty;
 	struct json_reader rdr;
 	struct json_item item;
@@ -34,11 +36,17 @@ int main(int argc, char *argv[])
 	json_source(&rdr, file, refill);
 	json_init(&rdr);
 	item.type = JSON_EMPTY;
-	do {
+	for (;;) {
 		last_was_empty = item.type == JSON_EMPTY;
 		if (json_read_item(&rdr, &item) < 0) {
 			return item.type;
 		}
-	} while (!(last_was_empty && item.type == JSON_EMPTY));
+		if (item.type == JSON_EMPTY) {
+			if (last_was_empty) break;
+		} else {
+			completely_empty = 0;
+		}
+	}
+	if (completely_empty) return ERROR_COMPLETELY_EMPTY;
 	return 0;
 }
