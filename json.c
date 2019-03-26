@@ -393,6 +393,7 @@ static int escape_char(struct json_reader *reader, struct json_string *str,
 	case 't': ch = '\t'; break;
 	case '"': ch =  '"'; break;
 	case'\\':            break;
+	case '/':            break;
 	case 'u':
 		read = next_chars(reader, buf, 4);
 		if (read < 0) goto error;

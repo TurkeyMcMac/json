@@ -267,7 +267,7 @@ y_object_with_newlines.json	SUCCEEDED	000
 y_string_1_2_3_bytes_UTF-8_sequences.json	SUCCEEDED	000
 y_string_accepted_surrogate_pair.json	SUCCEEDED	000
 y_string_accepted_surrogate_pairs.json	SUCCEEDED	000
-y_string_allowed_escapes.json	FAILED	016
+y_string_allowed_escapes.json	SUCCEEDED	000
 y_string_backslash_and_u_escaped_zero.json	SUCCEEDED	000
 y_string_backslash_doublequotes.json	SUCCEEDED	000
 y_string_comments.json	SUCCEEDED	000
