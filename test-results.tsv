@@ -161,7 +161,7 @@ n_string_incomplete_surrogate_escape_invalid.json	FAILED	000
 n_string_invalid-utf-8-in-escape.json	SUCCEEDED	016
 n_string_invalid_backslash_esc.json	FAILED	000
 n_string_invalid_unicode_escape.json	SUCCEEDED	016
-n_string_invalid_utf8_after_escape.json	FAILED	000
+n_string_invalid_utf8_after_escape.json	SUCCEEDED	014
 n_string_leading_uescaped_thinspace.json	SUCCEEDED	010
 n_string_no_quotes_with_bad_escape.json	SUCCEEDED	010
 n_string_single_doublequote.json	FAILED	000

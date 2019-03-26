@@ -17,6 +17,7 @@ int refill(char **buf, size_t *size, void *ctx)
 
 int main(int argc, char *argv[])
 {
+	int last_was_empty;
 	struct json_reader rdr;
 	struct json_item item;
 	FILE *file;
@@ -32,10 +33,12 @@ int main(int argc, char *argv[])
 	json_alloc(&rdr, 8, malloc, free, realloc);
 	json_source(&rdr, file, refill);
 	json_init(&rdr);
+	item.type = JSON_EMPTY;
 	do {
+		last_was_empty = item.type == JSON_EMPTY;
 		if (json_read_item(&rdr, &item) < 0) {
 			return item.type;
 		}
-	} while (item.type != JSON_EMPTY);
+	} while (!(last_was_empty && item.type == JSON_EMPTY));
 	return 0;
 }
