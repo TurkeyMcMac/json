@@ -54,7 +54,7 @@ n_array_missing_value.json	SUCCEEDED	010
 n_array_newlines_unclosed.json	SUCCEEDED	010
 n_array_number_and_comma.json	SUCCEEDED	010
 n_array_number_and_several_commas.json	SUCCEEDED	010
-n_array_spaces_vertical_tab_formfeed.json	SUCCEEDED	014
+n_array_spaces_vertical_tab_formfeed.json	SUCCEEDED	017
 n_array_star_inside.json	SUCCEEDED	010
 n_array_unclosed.json	SUCCEEDED	014
 n_array_unclosed_trailing_comma.json	SUCCEEDED	010
@@ -168,9 +168,9 @@ n_string_single_doublequote.json	SUCCEEDED	015
 n_string_single_quote.json	SUCCEEDED	010
 n_string_single_string_no_double_quotes.json	SUCCEEDED	010
 n_string_start_escape_unclosed.json	SUCCEEDED	014
-n_string_unescaped_crtl_char.json	FAILED	000
-n_string_unescaped_newline.json	FAILED	000
-n_string_unescaped_tab.json	FAILED	000
+n_string_unescaped_crtl_char.json	SUCCEEDED	017
+n_string_unescaped_newline.json	SUCCEEDED	017
+n_string_unescaped_tab.json	SUCCEEDED	017
 n_string_unicode_CapitalU.json	SUCCEEDED	016
 n_string_with_trailing_garbage.json	SUCCEEDED	010
 n_structure_100000_opening_arrays.json	SUCCEEDED	014

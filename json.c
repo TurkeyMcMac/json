@@ -496,6 +496,8 @@ static int parse_string(struct json_reader *reader, struct json_string *str)
 		if (ch == '\\') {
 			if (escape_char(reader, str, &cap))
 				goto error;
+		} else if (ch < 32) {
+			goto error_control_char;
 		} else {
 			if (push_byte(reader, &str->bytes, &str->len, &cap, ch))
 				goto error;
@@ -509,6 +511,10 @@ error_expected_string:
 
 error_unclosed_quote:
 	set_error(reader, JSON_ERROR_UNCLOSED_QUOTE);
+	return -1;
+
+error_control_char:
+	set_error(reader, JSON_ERROR_CONTROL_CHAR);
 	return -1;
 
 error:
