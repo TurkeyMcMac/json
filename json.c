@@ -393,7 +393,7 @@ static long hex_short(const char hex[4])
 static int escape_char(struct json_reader *reader, struct json_string *str,
 	size_t *cap)
 {
-	int read_extra_cp = 0, read_extra_escape = 0, read_extra = 0;
+	int read_extra_cp = 0, read_extra_escape = 0;
 	long utf16[2] = {-1, -1};
 	long codepoint, extracp = -1;
 	char utf8[4];
@@ -420,9 +420,7 @@ static int escape_char(struct json_reader *reader, struct json_string *str,
 		if (is_high_surrogate(utf16[0])) {
 			NEXT_CHAR(reader, ch, goto error);
 			if (ch != '\\') {
-				read_extra = 1;
-				buf[0] = ch;
-				read = 1;
+				reexamine_char(reader);
 			} else {
 				NEXT_CHAR(reader, ch, goto error);
 				if (ch == 'u') {
@@ -459,10 +457,6 @@ static int escape_char(struct json_reader *reader, struct json_string *str,
 			 * do so for \uXXXX, but that is handled non-
 			 * recursively. */
 			if (escape_char(reader, str, cap)) goto error;
-		} else if (read_extra) {
-			if (push_bytes(reader, &str->bytes, &str->len, cap,
-					(unsigned char *)buf, read))
-				goto error;
 		}
 		return 0;
 	default:

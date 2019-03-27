@@ -9,8 +9,8 @@ i_number_real_underflow.json	SUCCEEDED	000
 i_number_too_big_neg_int.json	SUCCEEDED	000
 i_number_too_big_pos_int.json	SUCCEEDED	000
 i_number_very_big_negative_int.json	SUCCEEDED	000
-i_object_key_lone_2nd_surrogate.json	SUCCEEDED	015
-i_string_1st_surrogate_but_2nd_missing.json	SUCCEEDED	015
+i_object_key_lone_2nd_surrogate.json	SUCCEEDED	000
+i_string_1st_surrogate_but_2nd_missing.json	SUCCEEDED	000
 i_string_1st_valid_surrogate_2nd_invalid.json	SUCCEEDED	000
 i_string_UTF-16LE_with_BOM.json	SUCCEEDED	010
 i_string_UTF-8_invalid_sequence.json	SUCCEEDED	000
@@ -18,12 +18,12 @@ i_string_UTF8_surrogate_U+D800.json	SUCCEEDED	000
 i_string_incomplete_surrogate_and_escape_valid.json	SUCCEEDED	000
 i_string_incomplete_surrogate_pair.json	SUCCEEDED	000
 i_string_incomplete_surrogates_escape_valid.json	SUCCEEDED	000
-i_string_invalid_lonely_surrogate.json	SUCCEEDED	015
+i_string_invalid_lonely_surrogate.json	SUCCEEDED	000
 i_string_invalid_surrogate.json	SUCCEEDED	000
 i_string_invalid_utf-8.json	SUCCEEDED	000
 i_string_inverted_surrogates_U+1D11E.json	SUCCEEDED	000
 i_string_iso_latin_1.json	SUCCEEDED	000
-i_string_lone_second_surrogate.json	SUCCEEDED	015
+i_string_lone_second_surrogate.json	SUCCEEDED	000
 i_string_lone_utf8_continuation_byte.json	SUCCEEDED	000
 i_string_not_in_unicode_range.json	SUCCEEDED	000
 i_string_overlong_sequence_2_bytes.json	SUCCEEDED	000
@@ -274,7 +274,7 @@ y_string_comments.json	SUCCEEDED	000
 y_string_double_escape_a.json	SUCCEEDED	000
 y_string_double_escape_n.json	SUCCEEDED	000
 y_string_escaped_control_character.json	SUCCEEDED	000
-y_string_escaped_noncharacter.json	FAILED	015
+y_string_escaped_noncharacter.json	SUCCEEDED	000
 y_string_in_array.json	SUCCEEDED	000
 y_string_in_array_with_leading_space.json	SUCCEEDED	000
 y_string_last_surrogates_1_and_2.json	SUCCEEDED	000
@@ -302,8 +302,8 @@ y_string_unicode_U+10FFFE_nonchar.json	SUCCEEDED	000
 y_string_unicode_U+1FFFE_nonchar.json	SUCCEEDED	000
 y_string_unicode_U+200B_ZERO_WIDTH_SPACE.json	SUCCEEDED	000
 y_string_unicode_U+2064_invisible_plus.json	SUCCEEDED	000
-y_string_unicode_U+FDD0_nonchar.json	FAILED	015
-y_string_unicode_U+FFFE_nonchar.json	FAILED	015
+y_string_unicode_U+FDD0_nonchar.json	SUCCEEDED	000
+y_string_unicode_U+FFFE_nonchar.json	SUCCEEDED	000
 y_string_unicode_escaped_double_quote.json	SUCCEEDED	000
 y_string_utf8.json	SUCCEEDED	000
 y_string_with_del_character.json	SUCCEEDED	000
