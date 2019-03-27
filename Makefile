@@ -15,8 +15,11 @@ $(parse-exe): $(header) $(json) $(parse)
 $(test-results): $(parse-exe)
 	./run-tests $(test-dir) | env LC_ALL=C sort > $@
 
-.PHONY: test
+.PHONY: test test-summary
 test: $(test-results)
+
+test-summary: $(test-results)
+	@./summarize-tests $(test-results)
 
 .PHONY: clean
 clean:

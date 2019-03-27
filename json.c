@@ -170,7 +170,8 @@ static int next_char(struct json_reader *reader)
 	while (!is_in_range(reader) && (reader->flags & SOURCE_DEPLETED) == 0) {
 		if (refill(reader)) return -1;
 	}
-	if (is_in_range(reader)) return reader->buf[reader->head++];
+	if (is_in_range(reader))
+		return (unsigned char)reader->buf[reader->head++];
 	return -1;
 }
 
@@ -218,23 +219,33 @@ static int parse_number(struct json_reader *reader, struct json_item *result)
 	if (ch == '0') {
 		status = 0;
 		NEXT_CHAR(reader, ch, goto finish);
-	} else {
-		while (isdigit(ch)) {
-			status = 0;
+	} else if (isdigit(ch)) {
+		status = 0;
+		do {
 			num *= 10;
 			num += ch - '0';
 			NEXT_CHAR(reader, ch, goto finish);
-		}
+		} while (isdigit(ch));
+	} else {
+		set_error(reader, JSON_ERROR_NUMBER_FORMAT);
+		goto error;
 	}
 	if (ch == '.') {
 		double fraction = 0.0;
 		status = -1;
 		NEXT_CHAR(reader, ch, goto error);
-		while (isdigit(ch)) {
+		if (isdigit(ch)) {
 			status = 0;
-			fraction += ch - '0';
-			fraction /= 10;
-			NEXT_CHAR(reader, ch, num += fraction; goto finish);
+			do {
+				fraction += ch - '0';
+				fraction /= 10;
+				NEXT_CHAR(reader, ch,
+					num += fraction;
+					goto finish);
+			} while (isdigit(ch));
+		} else {
+			set_error(reader, JSON_ERROR_NUMBER_FORMAT);
+			goto error;
 		}
 		num += fraction;
 	}
@@ -262,7 +273,10 @@ static int parse_number(struct json_reader *reader, struct json_item *result)
 		}
 		num *= pow(expsign * 10, exponent);
 	}
-	if (status) goto error;
+	if (status) {
+		set_error(reader, JSON_ERROR_NUMBER_FORMAT);
+		goto error;
+	}
 	reexamine_char(reader);
 finish:
 	num *= sign;
@@ -390,12 +404,13 @@ static int escape_char(struct json_reader *reader, struct json_string *str,
 	case 't': ch = '\t'; break;
 	case '"': ch =  '"'; break;
 	case'\\':            break;
+	case '/':            break;
 	case 'u':
 		read = next_chars(reader, buf, 4);
 		if (read < 0) goto error;
-		if (read < 4) goto hex_error;
+		if (read < 4) goto error_esc;
 		utf16[0] = hex_short(buf);
-		if (utf16[0] < 0) goto hex_error;
+		if (utf16[0] < 0) goto error_esc;
 		codepoint = utf16_to_codepoint(utf16[0]);
 		if (is_high_surrogate(utf16[0])) {
 			NEXT_CHAR(reader, ch, goto error);
@@ -409,9 +424,9 @@ static int escape_char(struct json_reader *reader, struct json_string *str,
 					read = next_chars(reader, buf,
 						4);
 					if (read < 0) goto error;
-					if (read < 4) goto hex_error;
+					if (read < 4) goto error_esc;
 					utf16[1] = hex_short(buf);
-					if (utf16[1] < 0) goto hex_error;
+					if (utf16[1] < 0) goto error_esc;
 					if (is_low_surrogate(utf16[1])) {
 						codepoint =
 							utf16_pair_to_codepoint(
@@ -446,22 +461,20 @@ static int escape_char(struct json_reader *reader, struct json_string *str,
 		}
 		return 0;
 	default:
-		if (push_byte(reader, &str->bytes, &str->len, cap, '\\'))
-			goto error;
-		break;
+		goto error_esc;
 	}
 	if (push_byte(reader, &str->bytes, &str->len, cap, ch)) goto error;
 	return 0;
 
-hex_error:
-	set_error(reader, JSON_ERROR_HEX);
+error_esc:
+	set_error(reader, JSON_ERROR_ESCAPE);
 error:
 	return -1;
 }
 
 static int parse_string(struct json_reader *reader, struct json_string *str)
 {
-	char ch;
+	int ch;
 	size_t cap = 16;
 	if (reader->buf[reader->head] != '"') goto error_expected_string;
 	++reader->head;
@@ -572,7 +585,12 @@ int json_read_item(struct json_reader *reader, struct json_item *result)
 	result->key.bytes = NULL;
 	if (!is_in_range(reader)) {
 		if (reader->flags & SOURCE_DEPLETED) {
-			return reader->stacksiz == 0 ? 0 : -1;
+			if (reader->stacksiz == 0) {
+				return 0;
+			} else {
+				set_error(reader, JSON_ERROR_BRACKETS);
+				goto error;
+			}
 		} else if (refill(reader)) {
 			goto error;
 		}
@@ -580,7 +598,8 @@ int json_read_item(struct json_reader *reader, struct json_item *result)
 	switch (peek_frame(reader)) {
 	case FRAME_EMPTY:
 		if (skip_spaces(reader)) goto error;
-		if (is_in_range(reader)) parse_value(reader, result);
+		if (is_in_range(reader) && parse_value(reader, result))
+			goto error;
 		return 0;
 	case FRAME_LIST:
 		if (skip_spaces(reader)) goto error;
