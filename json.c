@@ -566,7 +566,7 @@ static int parse_after_elem(struct json_reader *reader, int endch,
 	enum json_type type, struct json_item *result)
 {
 	int ch;
-	NEXT_CHAR(reader, ch, return -1);
+	NEXT_CHAR(reader, ch, return -has_error(reader));
 	if (ch == endch) {
 		pop_frame(reader);
 		result->type = type;
