@@ -2,7 +2,7 @@
 
 sub report_stat {
 	my ($name, $count, $total) = @_;
-	printf("%s: %d (%.0f%%)\n", $name, $count, $count / $total * 100);
+	printf("%s: %d (%.1f%%)\n", $name, $count, $count / $total * 100);
 }
 
 my $file = $ARGV[0];
