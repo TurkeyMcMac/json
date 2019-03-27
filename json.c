@@ -481,8 +481,8 @@ static int parse_string(struct json_reader *reader, struct json_string *str)
 {
 	int ch;
 	size_t cap = 16;
-	if (reader->buf[reader->head] != '"') goto error_expected_string;
-	++reader->head;
+	NEXT_CHAR(reader, ch, goto error);
+	if (ch != '"') goto error_expected_string;
 	str->bytes = alloc(reader, cap);
 	if (!str->bytes) goto error;
 	str->len = 0;
@@ -523,6 +523,7 @@ error:
 
 static int parse_value(struct json_reader *reader, struct json_item *result)
 {
+	if (!is_in_range(reader)) goto error_expected_value;
 	switch (reader->buf[reader->head]) {
 	case '[':
 		push_frame(reader, FRAME_LIST);
@@ -546,6 +547,8 @@ static int parse_value(struct json_reader *reader, struct json_item *result)
 	}
 	return 0;
 
+error_expected_value:
+	set_error(reader, ERROR_EXPECTED_VALUE);
 error:
 	return -1;
 }
