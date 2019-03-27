@@ -200,10 +200,9 @@ static long next_chars(struct json_reader *reader, char *buf, size_t bufsiz)
 		memcpy(buf, reader->buf + reader->head, easy_copy);
 		if (refill(reader)) return -1;
 		for (i = easy_copy; i < bufsiz; ++i) {
-			char ch = next_char(reader);
-			if (ch < 0)
-				return reader->flags & SOURCE_DEPLETED ?
-					(long)i : -1;
+			int ch;
+			NEXT_CHAR(reader, ch, return
+				reader->flags & SOURCE_DEPLETED ? (long)i : -1);
 			buf[i] = ch;
 		}
 	}
