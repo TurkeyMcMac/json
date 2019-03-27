@@ -516,32 +516,33 @@ error:
 
 static int parse_value(struct json_reader *reader, struct json_item *result)
 {
-	if (!is_in_range(reader)) goto error_expected_value;
-	switch (reader->buf[reader->head]) {
+	int ch;
+	NEXT_CHAR(reader, ch, goto error_expected_value);
+	switch (ch) {
 	case '[':
 		push_frame(reader, FRAME_LIST);
 		reader->flags |= STARTED_COMPOUND;
 		result->type = JSON_LIST;
-		++reader->head;
 		break;
 	case '{':
 		push_frame(reader, FRAME_MAP);
 		reader->flags |= STARTED_COMPOUND;
 		result->type = JSON_MAP;
-		++reader->head;
 		break;
 	case '"':
+		reexamine_char(reader);
 		if (parse_string(reader, &result->val.str)) goto error;
 		result->type = JSON_STRING;
 		break;
 	default:
+		reexamine_char(reader);
 		if (parse_token_value(reader, result)) goto error;
 		break;
 	}
 	return 0;
 
 error_expected_value:
-	set_error(reader, ERROR_EXPECTED_VALUE);
+	if (!has_error(reader)) set_error(reader, ERROR_EXPECTED_VALUE);
 error:
 	return -1;
 }
@@ -550,7 +551,7 @@ static int try_compound_end(struct json_reader *reader, int endch,
 	enum json_type type, struct json_item *result)
 {
 	int ch;
-	NEXT_CHAR(reader, ch, return -1);
+	NEXT_CHAR(reader, ch, return -has_error(reader));
 	if (ch == endch) {
 		pop_frame(reader);
 		result->type = type;
@@ -564,7 +565,7 @@ static int parse_after_elem(struct json_reader *reader, int endch,
 	enum json_type type, struct json_item *result)
 {
 	int ch;
-	NEXT_CHAR(reader, ch, return -1);
+	NEXT_CHAR(reader, ch, return -has_error(reader));
 	if (ch == endch) {
 		pop_frame(reader);
 		result->type = type;

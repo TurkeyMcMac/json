@@ -16,10 +16,52 @@ int refill(char **buf, size_t *size, void *ctx)
 	return !feof(file);
 }
 
+void debug_print(int *indent, struct json_item *item)
+{
+	if (*indent > 0) printf("%*c", *indent * 2, ' ');
+	if (item->key.bytes) {
+		printf("\"%.*s\": ", (int)item->key.len, item->key.bytes);
+	}
+	switch (item->type) {
+	case JSON_NULL:
+		printf("null,\n");
+		break;
+	case JSON_MAP:
+		printf("{\n");
+		++*indent;
+		break;
+	case JSON_END_MAP:
+		printf("\b\b},\n");
+		--*indent;
+		break;
+	case JSON_LIST:
+		printf("[\n");
+		++*indent;
+		break;
+	case JSON_END_LIST:
+		printf("\b\b],\n");
+		--*indent;
+		break;
+	case JSON_STRING:
+		printf("\"%.*s\",\n", (int)item->val.str.len,
+			item->val.str.bytes);
+		break;
+	case JSON_NUMBER:
+		printf("%f,\n", item->val.num);
+		break;
+	case JSON_BOOLEAN:
+		printf("%s,\n", item->val.boolean ? "true" : "false");
+		break;
+	default:break;
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	int completely_empty = 1;
 	int last_was_empty;
+	int is_printing;
+	int indent = 0;
 	struct json_reader rdr;
 	struct json_item item;
 	FILE *file;
@@ -27,6 +69,7 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "Usage: parse <file>\n");
 		return ERROR_CLI;
 	}
+	is_printing = getenv("JSON_DEBUG_PRINT") != NULL;
 	file = fopen(argv[1], "r");
 	if (!file) {
 		fprintf(stderr, "unable to open file '%s'\n", argv[1]);
@@ -46,6 +89,7 @@ int main(int argc, char *argv[])
 		} else {
 			completely_empty = 0;
 		}
+		if (is_printing) debug_print(&indent, &item);
 	}
 	if (completely_empty) return ERROR_COMPLETELY_EMPTY;
 	return 0;
