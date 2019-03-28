@@ -5,7 +5,7 @@ my $dirname = @ARGV[0];
 
 my %tests;
 
-print "TEST\tRESULT\tEXIT CODE\n";
+print "TEST\tRESULT\tEXIT CODE\tERROR NAME\n";
 
 my @files;
 opendir(DIR, $dirname) or die "Unable to open directory '$dirname'";
@@ -23,6 +23,25 @@ foreach my $file (@files) {
 	}
 }
 
+my @error_messages = ();
+if (open my $header, "<", "json.h") {
+	my $begun = 0;
+	my $idx = 0;
+	while (my $line = <$header>) {
+		if ($line =~ /enum json_type \{/) {
+			last;
+		}
+	}
+	while (my $line = <$header>) {
+		if ($line =~ /^\tJSON_(?:ERROR_)?(\w+)/) {
+			push @error_messages, $1;
+		} elsif ($line =~ /\};/) {
+			last;
+		}
+	}
+}
+@error_messages[0] = "";
+
 while (my ($file, $pid) = (each %tests)) {
 	my $kill_signal = 15;
 	my $timed_out = 0;
@@ -33,7 +52,7 @@ while (my ($file, $pid) = (each %tests)) {
 	alarm 1;
 	waitpid $pid, 0;
 	alarm 0;
-	my ($result, $exit);
+	my ($result, $exit, $message);
 	if ($timed_out) {
 		$result = "TIMED OUT";
 		$exit = 128 + $kill_signal;
@@ -56,6 +75,9 @@ while (my ($file, $pid) = (each %tests)) {
 		} else {
 			$result = $zero;
 		}
+		if ($exit <= $#error_messages) {
+			$message = @error_messages[$exit];
+		}
 	}
-	printf "%s\t%s\t%03d\n", $file, $result, $exit;
+	printf "%s\t%s\t%03d\t%s\n", $file, $result, $exit, $message;
 }
