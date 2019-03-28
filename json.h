@@ -4,23 +4,23 @@
 #include <stddef.h>
 
 struct json_reader {
-	void         *(*alloc)(size_t);
-	void          (*dealloc)(void *);
-	void         *(*resize)(void *, size_t);
-	int           (*refill)(char **buf, size_t *bufsiz, void *ctx);
-	char           *buf;
-	size_t          bufsiz;
-	void           *ctx;
-	size_t        	head;
-	unsigned char  *stack;
-	size_t        	stacksiz;
-	size_t        	stackcap;
-	int             flags;
+	void *(*alloc)(size_t);
+	void  (*dealloc)(void *);
+	void *(*resize)(void *, size_t);
+	int   (*refill)(char **buf, size_t *bufsiz, void *ctx);
+	char   *buf;
+	size_t  bufsiz;
+	void    *ctx;
+	size_t  head;
+	char   *stack;
+	size_t  stacksiz;
+	size_t  stackcap;
+	int     flags;
 };
 
 struct json_string {
-	unsigned char  *bytes;
-	size_t        	len;
+	char  *bytes;
+	size_t len;
 };
 
 enum json_type {

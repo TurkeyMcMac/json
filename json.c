@@ -82,12 +82,12 @@ static void *alloc(struct json_reader *reader, size_t size)
 	return ptr;
 }
 
-static int push_byte(struct json_reader *reader, unsigned char **bytes,
+static int push_byte(struct json_reader *reader, char **bytes,
 	size_t *len, size_t *cap, int ch)
 {
 	if (*len >= *cap) {
 		size_t new_cap = *cap + *cap / 2;
-		unsigned char *new_bytes = reader->resize(*bytes, new_cap);
+		char *new_bytes = reader->resize(*bytes, new_cap);
 		if (!new_bytes) {
 			set_error(reader, JSON_ERROR_MEMORY);
 			return -1;
@@ -100,12 +100,12 @@ static int push_byte(struct json_reader *reader, unsigned char **bytes,
 	return 0;
 }
 
-static int push_bytes(struct json_reader *reader, unsigned char **bytes,
-	size_t *len, size_t *cap, const unsigned char *buf, size_t bufsiz)
+static int push_bytes(struct json_reader *reader, char **bytes,
+	size_t *len, size_t *cap, const char *buf, size_t bufsiz)
 {
 	if (*len + bufsiz > *cap) {
 		size_t new_cap = *len + bufsiz;
-		unsigned char *new_bytes;
+		char *new_bytes;
 		new_cap += new_cap / 2;
 		new_bytes = reader->resize(*bytes, new_cap);
 		if (!new_bytes) {
@@ -439,12 +439,11 @@ static int escape_char(struct json_reader *reader, struct json_string *str,
 			}
 		}
 		if (push_bytes(reader, &str->bytes, &str->len, cap,
-			(unsigned char *)utf8,
-			codepoint_to_utf8(codepoint, utf8))) goto error;
+			utf8, codepoint_to_utf8(codepoint, utf8))) goto error;
 		if (read_extra_cp) {
 			if (push_bytes(reader, &str->bytes, &str->len, cap,
-				(unsigned char *)utf8,
-				codepoint_to_utf8(extracp, utf8))) goto error;
+					utf8, codepoint_to_utf8(extracp, utf8)))
+				goto error;
 		} else if (read_extra_escape) {
 			/* This will only every recurse once, since it can only
 			 * do so for \uXXXX, but that is handled non-
