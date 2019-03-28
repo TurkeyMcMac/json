@@ -44,3 +44,8 @@ I got the tests from [this repository](https://github.com/nst/JSONTestSuite),
 which can be found under the `tests` directory here, or the `test_parsing`
 directory in the original project. Many thanks to Nicolas Seriot for providing
 those tests publicly.
+
+### Test Failures
+The currently failing tests do not seem very important to me to fix. If the user
+wants this parser to be compliant, it is easy to keep it that way. Just parse
+only one map/array and check that the input source is empty afterward.
