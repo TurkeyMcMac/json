@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
 	int last_was_empty;
 	int is_printing;
 	int indent = 0;
-	struct json_reader rdr;
+	json_reader rdr;
 	struct json_item item;
 	FILE *file;
 	if (argc != 2) {

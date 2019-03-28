@@ -3,7 +3,7 @@
 #include <math.h>
 #include <string.h>
 
-int json_alloc(struct json_reader *reader, size_t stacksiz,
+int json_alloc(json_reader *reader, size_t stacksiz,
 	void *(*alloc)(size_t),
 	void  (*dealloc)(void *),
 	void *(*resize)(void *, size_t))
@@ -18,14 +18,14 @@ int json_alloc(struct json_reader *reader, size_t stacksiz,
 	return 0;
 }
 
-void json_source(struct json_reader *reader, void *ctx,
+void json_source(json_reader *reader, void *ctx,
 	int (*refill)(char **buf, size_t *bufsiz, void *ctx))
 {
 	reader->ctx = ctx;
 	reader->refill = refill;
 }
 
-void json_init(struct json_reader *reader)
+void json_init(json_reader *reader)
 {
 	reader->buf = NULL;
 	reader->bufsiz = 0;
@@ -33,7 +33,7 @@ void json_init(struct json_reader *reader)
 	reader->flags = 0;
 }
 
-void json_free(struct json_reader *reader)
+void json_free(json_reader *reader)
 {
 	reader->dealloc(reader->stack);
 }
@@ -54,35 +54,35 @@ static int is_space(int ch)
 		|| ch == '\v';
 }
 
-static void set_error(struct json_reader *reader, enum json_type err)
+static void set_error(json_reader *reader, enum json_type err)
 {
 	reader->flags |= err;
 }
 
-static void clear_error(struct json_reader *reader)
+static void clear_error(json_reader *reader)
 {
 	reader->flags &= ~0xFF;
 }
 
-static int has_error(struct json_reader *reader)
+static int has_error(json_reader *reader)
 {
 	return (reader->flags & 0xFF) != 0;
 }
 
-static void carry_error(struct json_reader *from, struct json_item *to)
+static void carry_error(json_reader *from, struct json_item *to)
 {
 	to->type = from->flags & 0xFF;
 	to->val.erridx = from->head;
 }
 
-static void *alloc(struct json_reader *reader, size_t size)
+static void *alloc(json_reader *reader, size_t size)
 {
 	void *ptr = reader->alloc(size);
 	if (!ptr) set_error(reader, JSON_ERROR_MEMORY);
 	return ptr;
 }
 
-static int push_byte(struct json_reader *reader, char **bytes,
+static int push_byte(json_reader *reader, char **bytes,
 	size_t *len, size_t *cap, int ch)
 {
 	if (*len >= *cap) {
@@ -100,7 +100,7 @@ static int push_byte(struct json_reader *reader, char **bytes,
 	return 0;
 }
 
-static int push_bytes(struct json_reader *reader, char **bytes,
+static int push_bytes(json_reader *reader, char **bytes,
 	size_t *len, size_t *cap, const char *buf, size_t bufsiz)
 {
 	if (*len + bufsiz > *cap) {
@@ -120,31 +120,31 @@ static int push_bytes(struct json_reader *reader, char **bytes,
 	return 0;
 }
 
-static int push_frame(struct json_reader *reader, int frame)
+static int push_frame(json_reader *reader, int frame)
 {
 	push_byte(reader, &reader->stack, &reader->stacksiz, &reader->stackcap,
 		frame);
 	return 0;
 }
 
-static int pop_frame(struct json_reader *reader)
+static int pop_frame(json_reader *reader)
 {
 	if (reader->stacksiz == 0) return FRAME_EMPTY;
 	return reader->stack[--reader->stacksiz];
 }
 
-static int peek_frame(const struct json_reader *reader)
+static int peek_frame(const json_reader *reader)
 {
 	if (reader->stacksiz == 0) return FRAME_EMPTY;
 	return reader->stack[reader->stacksiz - 1];
 }
 
-static int is_in_range(const struct json_reader *reader)
+static int is_in_range(const json_reader *reader)
 {
 	return reader->head < reader->bufsiz;
 }
 
-static int refill(struct json_reader *reader)
+static int refill(json_reader *reader)
 {
 	size_t newsiz = reader->bufsiz;
 	int retval = reader->refill(&reader->buf, &newsiz, reader->ctx);
@@ -158,7 +158,7 @@ static int refill(struct json_reader *reader)
 	return 0;
 }
 
-static int skip_spaces(struct json_reader *reader)
+static int skip_spaces(json_reader *reader)
 {
 	for (;;) {
 		while (is_in_range(reader)) {
@@ -170,7 +170,7 @@ static int skip_spaces(struct json_reader *reader)
 	}
 }
 
-static int next_char(struct json_reader *reader)
+static int next_char(json_reader *reader)
 {
 	while (!is_in_range(reader) && (reader->flags & SOURCE_DEPLETED) == 0) {
 		if (refill(reader)) return -1;
@@ -180,7 +180,7 @@ static int next_char(struct json_reader *reader)
 	return -1;
 }
 
-static void reexamine_char(struct json_reader *reader)
+static void reexamine_char(json_reader *reader)
 {
 	--reader->head;
 }
@@ -189,7 +189,7 @@ static void reexamine_char(struct json_reader *reader)
 	if (((ch)  = next_char((reader))) < 0) {do_fail;} \
 } while (0)
 
-static long next_chars(struct json_reader *reader, char *buf, size_t bufsiz)
+static long next_chars(json_reader *reader, char *buf, size_t bufsiz)
 {
 	if (reader->head + bufsiz <= reader->bufsiz) {
 		memcpy(buf, reader->buf + reader->head, bufsiz);
@@ -209,7 +209,7 @@ static long next_chars(struct json_reader *reader, char *buf, size_t bufsiz)
 	return bufsiz;
 }
 
-static int parse_number(struct json_reader *reader, struct json_item *result)
+static int parse_number(json_reader *reader, struct json_item *result)
 {
 	int status = JSON_ERROR_TOKEN;
 	double num = 0.0;
@@ -289,7 +289,7 @@ error:
 	return -1;
 }
 
-static int parse_token_value(struct json_reader *reader,
+static int parse_token_value(json_reader *reader,
 	struct json_item *result)
 {
 	long read;
@@ -383,7 +383,7 @@ static long hex_short(const char hex[4])
 	return num;
 }
 
-static int escape_char(struct json_reader *reader, struct json_string *str,
+static int escape_char(json_reader *reader, struct json_string *str,
 	size_t *cap)
 {
 	int read_extra_cp = 0, read_extra_escape = 0;
@@ -463,7 +463,7 @@ error:
 	return -1;
 }
 
-static int parse_string(struct json_reader *reader, struct json_string *str)
+static int parse_string(json_reader *reader, struct json_string *str)
 {
 	int ch;
 	size_t cap = 16;
@@ -507,7 +507,7 @@ error:
 	return -1;
 }
 
-static int parse_value(struct json_reader *reader, struct json_item *result)
+static int parse_value(json_reader *reader, struct json_item *result)
 {
 	int ch;
 	NEXT_CHAR(reader, ch, goto error_expected_value);
@@ -540,7 +540,7 @@ error:
 	return -1;
 }
 
-static int try_compound_end(struct json_reader *reader, int endch,
+static int try_compound_end(json_reader *reader, int endch,
 	enum json_type type, struct json_item *result)
 {
 	int ch;
@@ -554,7 +554,7 @@ static int try_compound_end(struct json_reader *reader, int endch,
 	return 0;
 }
 
-static int parse_after_elem(struct json_reader *reader, int endch,
+static int parse_after_elem(json_reader *reader, int endch,
 	enum json_type type, struct json_item *result)
 {
 	int ch;
@@ -569,7 +569,7 @@ static int parse_after_elem(struct json_reader *reader, int endch,
 	return 0;
 }
 
-static int parse_colon(struct json_reader *reader)
+static int parse_colon(json_reader *reader)
 {
 	if (reader->buf[reader->head] != ':') {
 		set_error(reader, JSON_ERROR_EXPECTED_COLON);
@@ -579,7 +579,7 @@ static int parse_colon(struct json_reader *reader)
 	return 0;
 }
 
-int json_read_item(struct json_reader *reader, struct json_item *result)
+int json_read_item(json_reader *reader, struct json_item *result)
 {
 	result->type = JSON_EMPTY;
 	result->key.len = 0;

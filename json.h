@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 
-struct json_reader {
+typedef struct {
 	void *(*alloc)(size_t);
 	void  (*dealloc)(void *);
 	void *(*resize)(void *, size_t);
@@ -16,7 +16,7 @@ struct json_reader {
 	size_t  stacksiz;
 	size_t  stackcap;
 	int     flags;
-};
+} json_reader;
 
 struct json_string {
 	char  *bytes;
@@ -58,18 +58,18 @@ struct json_item {
 	union json_data    val;
 };
 
-int json_alloc(struct json_reader *reader, size_t stacksiz,
+int json_alloc(json_reader *reader, size_t stacksiz,
 	void *(*alloc)(size_t),
 	void  (*dealloc)(void *),
 	void *(*resize)(void *, size_t));
 
-void json_source(struct json_reader *reader, void *ctx,
+void json_source(json_reader *reader, void *ctx,
 	int (*refill)(char **buf, size_t *bufsiz, void *ctx));
 
-void json_init(struct json_reader *reader);
+void json_init(json_reader *reader);
 
-int json_read_item(struct json_reader *reader, struct json_item *result);
+int json_read_item(json_reader *reader, struct json_item *result);
 
-void json_free(struct json_reader *reader);
+void json_free(json_reader *reader);
 
 #endif /* JSON_H_ */
