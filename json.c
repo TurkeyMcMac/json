@@ -542,7 +542,7 @@ static int parse_value(struct json_reader *reader, struct json_item *result)
 	return 0;
 
 error_expected_value:
-	if (!has_error(reader)) set_error(reader, ERROR_EXPECTED_VALUE);
+	if (!has_error(reader)) set_error(reader, JSON_ERROR_EXPECTED_VALUE);
 error:
 	return -1;
 }
