@@ -211,7 +211,7 @@ static long next_chars(struct json_reader *reader, char *buf, size_t bufsiz)
 
 static int parse_number(struct json_reader *reader, struct json_item *result)
 {
-	int status = -1;
+	int status = JSON_ERROR_TOKEN;
 	double num = 0.0;
 	double sign = 1.0;
 	int ch;
@@ -231,12 +231,11 @@ static int parse_number(struct json_reader *reader, struct json_item *result)
 			NEXT_CHAR(reader, ch, goto finish);
 		} while (isdigit(ch));
 	} else {
-		set_error(reader, JSON_ERROR_NUMBER_FORMAT);
 		goto error;
 	}
 	if (ch == '.') {
 		double fraction = 0.0;
-		status = -1;
+		status = JSON_ERROR_NUMBER_FORMAT;
 		NEXT_CHAR(reader, ch, goto error);
 		if (isdigit(ch)) {
 			status = 0;
@@ -248,7 +247,6 @@ static int parse_number(struct json_reader *reader, struct json_item *result)
 					goto finish);
 			} while (isdigit(ch));
 		} else {
-			set_error(reader, JSON_ERROR_NUMBER_FORMAT);
 			goto error;
 		}
 		num += fraction;
@@ -256,7 +254,7 @@ static int parse_number(struct json_reader *reader, struct json_item *result)
 	if (ch == 'e' || ch == 'E') {
 		long expsign = 1;
 		long exponent = 0;
-		status = -1;
+		status = JSON_ERROR_NUMBER_FORMAT;
 		NEXT_CHAR(reader, ch, goto error);
 		switch (ch) {
 		case '-':
@@ -277,10 +275,7 @@ static int parse_number(struct json_reader *reader, struct json_item *result)
 		}
 		num *= pow(expsign * 10, exponent);
 	}
-	if (status) {
-		set_error(reader, JSON_ERROR_NUMBER_FORMAT);
-		goto error;
-	}
+	if (status) goto error;
 	reexamine_char(reader);
 finish:
 	num *= sign;
@@ -290,8 +285,7 @@ finish:
 
 error:
 	reexamine_char(reader);
-	if (reader->flags & SOURCE_DEPLETED)
-		set_error(reader, JSON_ERROR_NUMBER_FORMAT);
+	set_error(reader, status);
 	return -1;
 }
 
