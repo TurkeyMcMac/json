@@ -14,7 +14,8 @@ my $n_failures = 0;
 my $n_ignored = 0;
 my $n_timed_out = 0;
 while (my $line = <$input>) {
-	if ($line =~ m/^([yni])_.+\t(SUCCEEDED|FAILED|TIMED OUT)\t\d{3}\n/) {
+	if ($line =~ m/^([yni])_.+\t(SUCCEEDED|FAILED|TIMED OUT)\t\d{3}\t\w*\n/)
+	{
 		++$n_tests;
 		if ($2 eq "TIMED OUT") {
 			++$n_timed_out;
