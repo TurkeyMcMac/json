@@ -7,13 +7,19 @@
 
 int refill(char **buf, size_t *size, void *ctx)
 {
+	int retval = 1;
+	size_t read;
 	FILE *file = ctx;
 	if (!*buf) {
 		*size = BUFSIZ;
 		if (!(*buf = malloc(*size))) return -1;
 	}
-	*size = fread(*buf, 1, *size, file);
-	return !feof(file);
+	read = fread(*buf, 1, *size, file);
+	if (read < *size) {
+		*size = read;
+		retval = feof(file) ? 0 : -JSON_ERROR_ERRNO;
+	}
+	return retval;
 }
 
 void debug_print(int *indent, struct json_item *item)

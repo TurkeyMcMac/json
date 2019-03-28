@@ -15,8 +15,10 @@ static int refill(char **buf, size_t *bufsiz, void *ctx)
 		if (!*buf) return -JSON_ERROR_MEMORY;
 	}
 	read = fread(*buf, 1, *bufsiz, file);
-	if (read < *bufsiz && feof(file)) retval = 0;
-	*bufsiz = read;
+	if (read < *bufsiz) {
+		retval = feof(file) ? 0 : -JSON_ERROR_ERRNO;
+		*bufsiz = read;
+	}
 	return retval;
 }
 

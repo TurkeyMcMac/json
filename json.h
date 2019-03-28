@@ -97,7 +97,15 @@ enum json_type {
 	JSON_ERROR_CONTROL_CHAR,
 	/* There was a trailing comma in a list, or a colon was followed by the
 	 * end of a map. */
-	JSON_ERROR_EXPECTED_VALUE
+	JSON_ERROR_EXPECTED_VALUE,
+
+	/* USER ERRORS are never thrown by the library itself, but are reserved
+	 * to be returned by the refill callback. */
+
+	/* There was some error reading from a file. */
+	JSON_ERROR_IO,
+	/* An error occurred which is now stored in errno. */
+	JSON_ERROR_ERRNO
 };
 
 /* The type-specific data in a json item. Many types have no associated field in
