@@ -7,18 +7,21 @@
 #define SOURCE_DEPLETED  0x0100
 #define STARTED_COMPOUND 0x0200
 
+/* reader::alloc compatible function which always fails. */
 static void *alloc_fail(size_t size)
 {
 	(void)size;
 	return NULL;
 }
 
+/* reader::resize compatible function which always fails. */
 static void *realloc_fail(void *ptr, size_t size)
 {
 	(void)ptr, (void)size;
 	return NULL;
 }
 
+/* reader::dealloc compatible function which does nothing. */
 static void dealloc_noop(void *ptr)
 {
 	(void)ptr;
@@ -43,6 +46,8 @@ int json_alloc(json_reader *reader,
 	return 0;
 }
 
+
+/* reader::refill compatible function which always indicates depletion. */
 static int refill_dont(char **buf, size_t *size, void *ctx)
 {
 	(void)buf, (void)size, (void)ctx;
@@ -76,39 +81,49 @@ void json_free(json_reader *reader)
 	reader->dealloc(reader->stack);
 }
 
+/* A type of frame on the stack. */
 enum frame {
+	/* Not actually a frame, but returned when an empty stack is popped. */
 	FRAME_EMPTY,
+	/* A list is being parsed. */
 	FRAME_LIST,
+	/* A map is being parsed. */
 	FRAME_MAP
 };
 
+/* Custom version of isspace which ignores \f as per the spec. */
 static int is_space(int ch)
 {
 	return ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r'
 		|| ch == '\v';
 }
 
+/* Set error indicator, assuming it has yet to be set. */
 static void set_error(json_reader *reader, enum json_type err)
 {
 	reader->flags |= err;
 }
 
+/* Clear the error indicator. */
 static void clear_error(json_reader *reader)
 {
 	reader->flags &= ~0xFF;
 }
 
+/* Returns whether an error has been set. */
 static int has_error(json_reader *reader)
 {
 	return (reader->flags & 0xFF) != 0;
 }
 
+/* Set error information in the item to that in the reader. */
 static void carry_error(json_reader *from, struct json_item *to)
 {
 	to->type = from->flags & 0xFF;
 	to->val.erridx = from->head;
 }
 
+/* Allocate using the reader's function or set error on failure. */
 static void *alloc(json_reader *reader, size_t size)
 {
 	void *ptr = reader->alloc(size);
@@ -116,6 +131,9 @@ static void *alloc(json_reader *reader, size_t size)
 	return ptr;
 }
 
+/* Push a byte to the memory area. len is the logical size, while cap is the
+ * size of the memory area. Returns 0 on success or -1 on error (and the error
+ * is indicated.) */
 static int push_byte(json_reader *reader, char **bytes,
 	size_t *len, size_t *cap, int ch)
 {
@@ -134,6 +152,9 @@ static int push_byte(json_reader *reader, char **bytes,
 	return 0;
 }
 
+/* Push several bytes to the memory area. len is the logical size, while cap is
+ * the size of the memory area. Returns 0 on success or -1 on error (and the
+ * error is indicated.) */
 static int push_bytes(json_reader *reader, char **bytes,
 	size_t *len, size_t *cap, const char *buf, size_t bufsiz)
 {
@@ -154,6 +175,7 @@ static int push_bytes(json_reader *reader, char **bytes,
 	return 0;
 }
 
+/* Push a frame to the reader's stack. */
 static int push_frame(json_reader *reader, int frame)
 {
 	push_byte(reader, &reader->stack, &reader->stacksiz, &reader->stackcap,
@@ -161,23 +183,30 @@ static int push_frame(json_reader *reader, int frame)
 	return 0;
 }
 
+/* Take off and return the top stack frame, or FRAME_EMPTY if the stack is
+ * empty. */
 static int pop_frame(json_reader *reader)
 {
 	if (reader->stacksiz == 0) return FRAME_EMPTY;
 	return reader->stack[--reader->stacksiz];
 }
 
+/* Return the top stack frame, or FRAME_EMPTY if the stack is empty. */
 static int peek_frame(const json_reader *reader)
 {
 	if (reader->stacksiz == 0) return FRAME_EMPTY;
 	return reader->stack[reader->stacksiz - 1];
 }
 
+/* Return whether the current buffer has more to give or if it needs to be
+ * refilled. */
 static int is_in_range(const json_reader *reader)
 {
 	return reader->head < reader->bufsiz;
 }
 
+/* Refill the buffer. Returns 0 on success or -1 (with an error indicated) on
+ * failure. SOURCE_DEPLETED is set if the input has no more to give. */
 static int refill(json_reader *reader)
 {
 	size_t newsiz = reader->bufsiz;
@@ -192,6 +221,9 @@ static int refill(json_reader *reader)
 	return 0;
 }
 
+/* Skip whitespace (see is_space) from the current character to the first
+ * non-whitespace. The buffer is refilled as many times as is necessary. Returns
+ * 0 on success or -1 on failure. */
 static int skip_spaces(json_reader *reader)
 {
 	for (;;) {
@@ -204,6 +236,9 @@ static int skip_spaces(json_reader *reader)
 	}
 }
 
+/* Get the next byte from the input, refilling the buffer if necessary. Returns
+ * the byte past which the head just advanced on success, or -1 when there was
+ * an error OR the source was depleted (check has_error.) */
 static int next_char(json_reader *reader)
 {
 	while (!is_in_range(reader) && (reader->flags & SOURCE_DEPLETED) == 0) {
@@ -214,15 +249,24 @@ static int next_char(json_reader *reader)
 	return -1;
 }
 
+/* After a call to next_char, use this function so that the next call to
+ * next_char, or the next examination of the byte at reader->head, will return
+ * the same byte as the last call did. */
 static void reexamine_char(json_reader *reader)
 {
 	--reader->head;
 }
 
+/* Call next_char, store it in the location ch, and execute do_fail if the call
+ * returned -1. do_fail need not be semicolon-terminated. */
 #define NEXT_CHAR(reader, ch, do_fail) do { \
 	if (((ch)  = next_char((reader))) < 0) {do_fail;} \
 } while (0)
 
+/* Read the next bufsiz chars from the reader into buf, refilling when
+ * necessary. The number returned is -1 on error (and the error is set), or the
+ * number of bytes read on success. The number returned will be less than bufsiz
+ * if the source had less to give than bufsiz. */
 static long next_chars(json_reader *reader, char *buf, size_t bufsiz)
 {
 	if (reader->head + bufsiz <= reader->bufsiz) {
@@ -243,6 +287,9 @@ static long next_chars(json_reader *reader, char *buf, size_t bufsiz)
 	return bufsiz;
 }
 
+/* Parse a double-precision number according to JSON's grammar. Returns 0 on
+ * success (and sets the result to a number) or -1 on error with a hopefully
+ * appropriate error message. */
 static int parse_number(json_reader *reader, struct json_item *result)
 {
 	int status = JSON_ERROR_TOKEN;
@@ -323,6 +370,10 @@ error:
 	return -1;
 }
 
+/* Parse a single-token value, meaning null, a boolean, or a number. On success,
+ * 0 is returned and the result is set. Otherwise, -1 is returned and an error
+ * is set.
+ * XXX THIS CURRENTLY DOES NOT CHECK IF THE READER IS IN RANGE BEFOREHAND! */
 static int parse_token_value(json_reader *reader,
 	struct json_item *result)
 {
@@ -358,26 +409,35 @@ error:
 	return -1;
 }
 
+/* Checks whether the given UTF-16 code unit is the high part of a surrogate
+ * pair. */
 static int is_high_surrogate(unsigned utf16)
 {
 	return (utf16 & 0xD800) == 0xD800;
 }
 
+/* Checks whether the given UTF-16 code unit is the low part of a surrogate
+ * pair. */
 static int is_low_surrogate(unsigned utf16)
 {
 	return (utf16 & 0xDC00) == 0xDC00;
 }
 
+
+/* Converts a non-paired UTF-16 code unit to a unicode codepoint. */
 static long utf16_to_codepoint(unsigned utf16)
 {
 	return utf16;
 }
 
+/* Converts a UTF-16 surrogate pair to a unicode codepoint. */
 static long utf16_pair_to_codepoint(unsigned high, unsigned low)
 {
 	return (high - 0xD800) * 0x400 + (low - 0xDC00) + 0x10000;
 }
 
+/* Converts a unicode codepoint (cp) to a UTF-8 code unit in buf. Returns the
+ * size of the code unit in bytes. */
 size_t codepoint_to_utf8(long cp, char buf[4])
 {
 	if (cp <= 0x7F) {
@@ -401,6 +461,9 @@ size_t codepoint_to_utf8(long cp, char buf[4])
 	}
 }
 
+/* Parses an unsigned short (2 byte) number from four hexidecimal digits.
+ * Returns the number on success, or -1 when a digit is invalid. This is case-
+ * insensitive. */
 static long hex_short(const char hex[4])
 {
 	long num = 0;
@@ -417,6 +480,13 @@ static long hex_short(const char hex[4])
 	return num;
 }
 
+/* Read the part of an escape character AFTER the backslash into a string. On
+ * success, zero is returned and the character(s) are pushed onto the string.
+ * On failure (there was an I/O error or an invalid escape), -1 is returned. You
+ * probably shouldn't rely on the contents of the string in that case.
+ *
+ * XXX This may read two escape characters due to the inability of the parser to
+ * backtrack when parsing invalid surrogate pairs. */
 static int escape_char(json_reader *reader, struct json_string *str,
 	size_t *cap)
 {
@@ -497,6 +567,9 @@ error:
 	return -1;
 }
 
+/* Parse a quoted string. This DOES check that the first character is '"'. On
+ * success, 0 is returned and str has been allocated. On failure, -1 is returned
+ * and the error is set. */
 static int parse_string(json_reader *reader, struct json_string *str)
 {
 	int ch;
@@ -541,6 +614,9 @@ error:
 	return -1;
 }
 
+/* Parse any JSON value. Compound values have only their beginnings parsed. On
+ * success, 0 is returned and the result is set, while -1 is returned and an
+ * error is set on failure. */
 static int parse_value(json_reader *reader, struct json_item *result)
 {
 	int ch;
@@ -574,6 +650,9 @@ error:
 	return -1;
 }
 
+/* See if the next character is ench. If so, the stack is popped and the
+ * compound ending result type is set. If not, the character is left to be
+ * examined again. */
 static int try_compound_end(json_reader *reader, int endch,
 	enum json_type type, struct json_item *result)
 {
@@ -588,6 +667,11 @@ static int try_compound_end(json_reader *reader, int endch,
 	return 0;
 }
 
+/* See if the next character is ench. If so, the stack is popped and the
+ * compound ending result type is set. If the character is ',' instead, the
+ * parser simply advances past the character. Otherwise, that's an error. On
+ * success, 0 is returned, while -1 is returned and an error is set on failure.
+ */
 static int parse_after_elem(json_reader *reader, int endch,
 	enum json_type type, struct json_item *result)
 {
@@ -603,6 +687,9 @@ static int parse_after_elem(json_reader *reader, int endch,
 	return 0;
 }
 
+/* See if the current character is ':'. If so, the parser advances past. If not,
+ * an error is set and -1 is returned (0 is returned on success.)
+ * XXX THIS CURRENTLY DOES NOT CHECK IF THE READER IS IN RANGE BEFOREHAND! */
 static int parse_colon(json_reader *reader)
 {
 	if (reader->buf[reader->head] != ':') {
