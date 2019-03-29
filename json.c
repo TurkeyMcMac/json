@@ -98,22 +98,22 @@ static int is_space(int ch)
 		|| ch == '\v';
 }
 
-/* Set error indicator, assuming it has yet to be set. */
+/* Returns whether an error has been set. */
+static int has_error(json_reader *reader)
+{
+	return (reader->flags & 0xFF) != 0;
+}
+
+/* Set error indicator if it has yet to be set. */
 static void set_error(json_reader *reader, enum json_type err)
 {
-	reader->flags |= err;
+	if (!has_error(reader)) reader->flags |= err;
 }
 
 /* Clear the error indicator. */
 static void clear_error(json_reader *reader)
 {
 	reader->flags &= ~0xFF;
-}
-
-/* Returns whether an error has been set. */
-static int has_error(json_reader *reader)
-{
-	return (reader->flags & 0xFF) != 0;
 }
 
 /* Set error information in the item to that in the reader. */
@@ -212,7 +212,7 @@ static int refill(json_reader *reader)
 	size_t newsiz = reader->bufsiz;
 	int retval = reader->refill(&reader->buf, &newsiz, reader->ctx);
 	if (retval < 0) {
-		set_error(reader, -retval);
+		set_error(reader, -retval & 0xFF);
 		return -1;
 	}
 	if (retval == 0) reader->flags |= SOURCE_DEPLETED;
