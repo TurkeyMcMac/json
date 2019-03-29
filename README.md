@@ -4,6 +4,8 @@ relatively easy and useful.
 ## API
 The API is documented in `json.h`, but here's a quick example:
 ```c
+/* Compile with -DJSON_WITH_STDIO */
+
 FILE *file = ...;
 char buf[BUFSIZ];
 json_reader rdr;
