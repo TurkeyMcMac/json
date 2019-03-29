@@ -3,6 +3,10 @@
 #include <math.h>
 #include <string.h>
 
+/* Flags for reader::flags */
+#define SOURCE_DEPLETED  0x0100
+#define STARTED_COMPOUND 0x0200
+
 static void *alloc_fail(size_t size)
 {
 	(void)size;
@@ -46,12 +50,31 @@ void json_source(json_reader *reader, void *ctx,
 	reader->refill = refill;
 }
 
+static int refill_string(char **buf, size_t *size, void *ctx)
+{
+	(void)buf, (void)size, (void)ctx;
+	return 0;
+}
+
+void json_source_string(json_reader *reader, const char *str, size_t len)
+{
+	reader->ctx = NULL;
+	reader->buf = (char *)str;
+	reader->bufsiz = len;
+	reader->refill = refill_string;
+	reader->flags = SOURCE_DEPLETED;
+	reader->head = 0;
+}
+
 void json_init(json_reader *reader)
 {
-	reader->buf = NULL;
-	reader->bufsiz = 0;
-	reader->head = 0;
-	reader->flags = 0;
+	/* A bit hacky, but it will do. */
+	if (reader->refill != refill_string) {
+		reader->buf = NULL;
+		reader->bufsiz = 0;
+		reader->flags = 0;
+		reader->head = 0;
+	} /* Otherwise, it's already initialized. */
 }
 
 void json_free(json_reader *reader)
@@ -64,10 +87,6 @@ enum frame {
 	FRAME_LIST,
 	FRAME_MAP
 };
-
-/* Flags for reader::flags */
-#define SOURCE_DEPLETED  0x0100
-#define STARTED_COMPOUND 0x0200
 
 static int is_space(int ch)
 {

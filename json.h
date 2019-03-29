@@ -142,6 +142,8 @@ struct json_item {
  * Initialization is broken into three functions:
  *  1. json_alloc (example: json_alloc(&reader, 8, NULL, malloc, free, realloc))
  *  2. json_source (example: json_source(&reader, file, my_refill_file))
+ *   - json_source_string is a more specialized version
+ *     (example: json_source_string(&reader, "[1,2,true]", 10))
  *  3. json_init (always just json_init(&reader))
  * See below for details.
  *
@@ -195,6 +197,13 @@ int json_alloc(json_reader *reader,
  *         source is depleted. */
 void json_source(json_reader *reader, void *ctx,
 	int (*refill)(char **buf, size_t *bufsiz, void *ctx));
+
+/* Set the input source for a parser to the given buffer and no more.
+ * PARAMETERS:
+ *  1. reader: The parser.
+ *  2. str: The text buffer.
+ *  3. len: The length of the buffer. */
+void json_source_string(json_reader *reader, const char *str, size_t len);
 
 /* Initialize internal state for the given parser. This must be called AFTER the
  * other two initialization functions. */
