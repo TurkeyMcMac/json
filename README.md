@@ -43,3 +43,12 @@ those tests publicly.
 The currently failing tests do not seem very important to me to fix. If the user
 wants this parser to be compliant, it is easy to keep it that way. Just parse
 only one map/array and check that the input source is empty afterward.
+
+## Dependencies
+Currently the library depends on the standard library for string manipulation
+and character classification. It depends on the standard math library for the
+pow function. It does not require the user to use the standard library
+allocation, although that is the easiest method.
+
+The tests require Perl 5 or so to run, and I haven't tested the scripts on
+non-unix systems. run-tests specifically makes heavy use of POSIX system calls.
