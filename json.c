@@ -43,38 +43,32 @@ int json_alloc(json_reader *reader,
 	return 0;
 }
 
-void json_source(json_reader *reader, void *ctx,
-	int (*refill)(char **buf, size_t *bufsiz, void *ctx))
-{
-	reader->ctx = ctx;
-	reader->refill = refill;
-}
-
-static int refill_string(char **buf, size_t *size, void *ctx)
+static int refill_dont(char **buf, size_t *size, void *ctx)
 {
 	(void)buf, (void)size, (void)ctx;
 	return 0;
 }
 
-void json_source_string(json_reader *reader, const char *str, size_t len)
+void json_source(json_reader *reader,
+	char *buf, size_t bufsiz, void *ctx,
+	int (*refill)(char **buf, size_t *bufsiz, void *ctx))
 {
-	reader->ctx = NULL;
-	reader->buf = (char *)str;
-	reader->bufsiz = len;
-	reader->refill = refill_string;
-	reader->flags = SOURCE_DEPLETED;
-	reader->head = 0;
+	reader->ctx = ctx;
+	reader->buf = buf;
+	reader->bufsiz = bufsiz;
+	reader->head = bufsiz;
+	if (refill) {
+		reader->refill = refill;
+		reader->flags = 0;
+	} else {
+		reader->refill = refill_dont;
+		reader->flags = SOURCE_DEPLETED;
+	}
 }
 
-void json_init(json_reader *reader)
+void json_source_string(json_reader *reader, const char *str, size_t len)
 {
-	/* A bit hacky, but it will do. */
-	if (reader->refill != refill_string) {
-		reader->buf = NULL;
-		reader->bufsiz = 0;
-		reader->flags = 0;
-		reader->head = 0;
-	} /* Otherwise, it's already initialized. */
+	json_source(reader, (char *)str, len, NULL, NULL);
 }
 
 void json_free(json_reader *reader)

@@ -7,19 +7,14 @@
 
 int refill(char **buf, size_t *size, void *ctx)
 {
-	int retval = 1;
 	size_t read;
 	FILE *file = ctx;
-	if (!*buf) {
-		*size = BUFSIZ;
-		if (!(*buf = malloc(*size))) return -1;
-	}
 	read = fread(*buf, 1, *size, file);
 	if (read < *size) {
 		*size = read;
-		retval = feof(file) ? 0 : -JSON_ERROR_ERRNO;
+		return feof(file) ? 0 : -JSON_ERROR_ERRNO;
 	}
-	return retval;
+	return 1;
 }
 
 void debug_print(int *indent, struct json_item *item)
@@ -64,6 +59,7 @@ void debug_print(int *indent, struct json_item *item)
 
 int main(int argc, char *argv[])
 {
+	char buf[BUFSIZ];
 	int completely_empty = 1;
 	int last_was_empty;
 	int is_printing;
@@ -82,8 +78,7 @@ int main(int argc, char *argv[])
 		return ERROR_CLI;
 	}
 	json_alloc(&rdr, NULL, 8, malloc, free, realloc);
-	json_source(&rdr, file, refill);
-	json_init(&rdr);
+	json_source(&rdr, buf, sizeof(buf), file, refill);
 	item.type = JSON_EMPTY;
 	for (;;) {
 		last_was_empty = item.type == JSON_EMPTY;
