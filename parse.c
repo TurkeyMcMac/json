@@ -5,18 +5,6 @@
 #define ERROR_COMPLETELY_EMPTY  64
 #define ERROR_CLI               65
 
-int refill(char **buf, size_t *size, void *ctx)
-{
-	size_t read;
-	FILE *file = ctx;
-	read = fread(*buf, 1, *size, file);
-	if (read < *size) {
-		*size = read;
-		return feof(file) ? 0 : -JSON_ERROR_ERRNO;
-	}
-	return 1;
-}
-
 void debug_print(int *indent, struct json_item *item)
 {
 	if (*indent > 0) printf("%*c", *indent * 2, ' ');
@@ -78,7 +66,7 @@ int main(int argc, char *argv[])
 		return ERROR_CLI;
 	}
 	json_alloc(&rdr, NULL, 8, malloc, free, realloc);
-	json_source(&rdr, buf, sizeof(buf), file, refill);
+	json_source_file(&rdr, buf, sizeof(buf), file);
 	item.type = JSON_EMPTY;
 	for (;;) {
 		last_was_empty = item.type == JSON_EMPTY;

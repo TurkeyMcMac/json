@@ -10,7 +10,7 @@ c-flags = -ansi -Wall -Wextra -O3 $(CFLAGS)
 linkage = -lm
 
 $(parse-exe): $(header) $(json) $(parse)
-	$(CC) $(c-flags) -o $@ $(parse) $(json) $(linkage)
+	$(CC) $(c-flags) -DJSON_WITH_STDIO -o $@ $(parse) $(json) $(linkage)
 
 $(test-results): $(parse-exe)
 	./run-tests $(test-dir) | env LC_ALL=C sort > $@

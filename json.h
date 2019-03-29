@@ -2,6 +2,9 @@
 #define JSON_H_
 
 #include <stddef.h>
+#ifdef JSON_WITH_STDIO
+#include <stdio.h>
+#endif
 
 /* The persistent state between calls to json_read_item. Consider this an opaque
  * type. */
@@ -141,9 +144,12 @@ struct json_item {
  * INITIALIZATION
  * Initialization is broken into two functions:
  *  1. json_alloc (example: json_alloc(&reader, 8, NULL, malloc, free, realloc))
- *  2. json_source (example: json_source(&reader, file, my_refill_file))
+ *  2. json_source
+ *     (example: json_source(&reader, buf, sizeof(buf), file, my_refill_file))
  *   - json_source_string is a more specialized version
  *     (example: json_source_string(&reader, "[1,2,true]", 10))
+ *   - json_source_file is for reading stdio files
+ *     (example: json_source_file(&reader, buf, sizeof(buf), file))
  * One function of each type should be called in that order.
  * See below for details.
  *
@@ -209,6 +215,17 @@ void json_source(json_reader *reader,
  *  2. str: The text buffer.
  *  3. len: The length of the buffer. */
 void json_source_string(json_reader *reader, const char *str, size_t len);
+
+#ifdef JSON_WITH_STDIO
+/* Read JSON from a FILE stream.
+ * PARAMETERS:
+ *  1. reader: The parser to modify.
+ *  2. buf: The data buffer.
+ *  3. bufsiz: The size of the data buffer.
+ *  4. file: The stream from which to read. */
+void json_source_file(json_reader *reader, char *buf, size_t bufsiz,
+	FILE *file);
+#endif /* JSON_WITH_STDIO */
 
 /* Read the next item from the input source.
  * PARAMETERS:

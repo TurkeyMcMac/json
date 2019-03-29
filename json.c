@@ -46,7 +46,6 @@ int json_alloc(json_reader *reader,
 	return 0;
 }
 
-
 /* reader::refill compatible function which always indicates depletion. */
 static int refill_dont(char **buf, size_t *size, void *ctx)
 {
@@ -75,6 +74,25 @@ void json_source_string(json_reader *reader, const char *str, size_t len)
 {
 	json_source(reader, (char *)str, len, NULL, NULL);
 }
+
+#ifdef JSON_WITH_STDIO
+/* reader::refill compatible function which reads from a stdio file. */
+static int refill_stdio(char **buf, size_t *size, void *ctx)
+{
+	FILE *file = ctx;
+	size_t got = fread(*buf, 1, *size, file);
+	if (got < *size) {
+		*size = got;
+		return feof(file) ? 0 : -JSON_ERROR_ERRNO;
+	}
+	return 1;
+}
+
+void json_source_file(json_reader *reader, char *buf, size_t bufsiz, FILE *file)
+{
+	json_source(reader, buf, bufsiz, file, refill_stdio);
+}
+#endif /* JSON_WITH_STDIO */
 
 void json_free(json_reader *reader)
 {

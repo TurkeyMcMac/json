@@ -4,26 +4,13 @@ relatively easy and useful.
 ## API
 The API is documented in `json.h`, but here's a quick example:
 ```c
-static int refill(char **buf, size_t *bufsiz, void *ctx)
-{
-	size_t read;
-	FILE *file = ctx;
-	read = fread(*buf, 1, *bufsiz, file);
-	if (read < *bufsiz) {
-		*bufsiz = read;
-		return feof(file) ? 0 : -JSON_ERROR_ERRNO;
-	}
-	return 1;
-}
-
-...
-
+FILE *file = ...;
 char buf[BUFSIZ];
 json_reader rdr;
 struct json_item item;
 
 json_alloc(&rdr, 8, malloc, free, realloc);
-json_source(&rdr, buf, sizeof(buf), file, refill);
+json_source_file(&rdr, buf, sizeof(buf), file);
 do {
 	if (json_read_item(&rdr, &item) < 0) {
 		/* Handle the error, the type of which is in item.type. */
