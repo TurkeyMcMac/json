@@ -227,6 +227,18 @@ void json_source_file(json_reader *reader, char *buf, size_t bufsiz,
 	FILE *file);
 #endif /* JSON_WITH_STDIO */
 
+#ifdef JSON_WITH_FD
+/* Read JSON from a file descriptor. Seeking need not be supported. However,
+ * this depends on a file consistently being able to fill a buffer of the same
+ * size. It will not work on stdin, for example, which is line buffered.
+ * PARAMETERS:
+ *  1. reader: The parser to modify.
+ *  2. buf: The data buffer.
+ *  3. bufsiz: The size of the data buffer.
+ *  4. file: The file descriptor from which to read. */
+void json_source_fd(json_reader *reader, char *buf, size_t bufsiz, int fd);
+#endif /* JSON_WITH_FD */
+
 /* Read the next item from the input source.
  * PARAMETERS:
  *  1. reader: The parser being used.

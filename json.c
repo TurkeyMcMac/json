@@ -2,6 +2,9 @@
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
+#ifdef JSON_WITH_FD
+#include <unistd.h>
+#endif
 
 /* Flags for reader::flags */
 #define SOURCE_DEPLETED  0x0100
@@ -93,6 +96,26 @@ void json_source_file(json_reader *reader, char *buf, size_t bufsiz, FILE *file)
 	json_source(reader, buf, bufsiz, file, refill_stdio);
 }
 #endif /* JSON_WITH_STDIO */
+
+#ifdef JSON_WITH_FD
+/* reader::refill compatible function which reads from a file descriptor. */
+static int refill_fd(char **buf, size_t *size, void *ctx)
+{
+	int fd = (intptr_t)ctx;
+	ssize_t got = read(fd, *buf, *size);
+	if (got < 0) return -JSON_ERROR_ERRNO;
+	if ((size_t)got < *size) {
+		*size = got;
+		return 0;
+	}
+	return 1;
+}
+
+void json_source_fd(json_reader *reader, char *buf, size_t bufsiz, int fd)
+{
+	json_source(reader, buf, bufsiz, (void *)(intptr_t)fd, refill_fd);
+}
+#endif /* JSON_WITH_FD */
 
 void json_free(json_reader *reader)
 {
