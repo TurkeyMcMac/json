@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "unable to open file '%s'\n", argv[1]);
 		return ERROR_CLI;
 	}
-	json_alloc(&rdr, 8, malloc, free, realloc);
+	json_alloc(&rdr, NULL, 8, malloc, free, realloc);
 	json_source(&rdr, file, refill);
 	json_init(&rdr);
 	item.type = JSON_EMPTY;

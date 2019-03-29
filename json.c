@@ -3,18 +3,39 @@
 #include <math.h>
 #include <string.h>
 
-int json_alloc(json_reader *reader, size_t stacksiz,
+static void *alloc_fail(size_t size)
+{
+	(void)size;
+	return NULL;
+}
+
+static void *realloc_fail(void *ptr, size_t size)
+{
+	(void)ptr, (void)size;
+	return NULL;
+}
+
+static void dealloc_noop(void *ptr)
+{
+	(void)ptr;
+}
+
+int json_alloc(json_reader *reader,
+	void *stack, size_t stacksiz,
 	void *(*alloc)(size_t),
 	void  (*dealloc)(void *),
 	void *(*resize)(void *, size_t))
 {
 	reader->stackcap = stacksiz;
 	reader->stacksiz = 0;
-	reader->alloc = alloc;
-	reader->dealloc = dealloc;
-	reader->resize = resize;
-	reader->stack = reader->alloc(stacksiz);
-	if (!reader->stack) return -1;
+	reader->alloc = alloc ? alloc : alloc_fail;
+	reader->dealloc = dealloc ? dealloc : dealloc_noop;
+	reader->resize = resize ? resize : realloc_fail;
+	if (!stack) {
+		stack = reader->alloc(stacksiz);
+		if (!stack) return -1;
+	}
+	reader->stack = stack;
 	return 0;
 }
 

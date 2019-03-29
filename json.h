@@ -140,7 +140,7 @@ struct json_item {
  *
  * INITIALIZATION
  * Initialization is broken into three functions:
- *  1. json_alloc (example: json_alloc(&reader, 8, malloc, free, realloc))
+ *  1. json_alloc (example: json_alloc(&reader, 8, NULL, malloc, free, realloc))
  *  2. json_source (example: json_source(&reader, file, my_refill_file))
  *  3. json_init (always just json_init(&reader))
  * See below for details.
@@ -156,13 +156,19 @@ struct json_item {
 /* Set the allocation routines for a parser.
  * PARAMETERS:
  *  1. reader: The parser to modify.
- *  2. stacksiz: the initial size of the internal stack.
- *  3. alloc: The allocation function, compatible with malloc.
- *  4. dealloc: The deallocation function, compatible with free.
- *  5. dealloc: The reallocation function, compatible with realloc.
+ *  2. stack: a memory buffer of size stacksiz, compatible with the dealloc and
+ *            resize routines, or NULL if one should be generated using alloc.
+ *  3. stacksiz: the initial size of the internal stack.
+ *  4. alloc: The allocation function, compatible with malloc. Allocation always
+ *            fails when this is NULL.
+ *  5. dealloc: The deallocation function, compatible with free. When this is
+ *              NULL, deallocation does nothing.
+ *  6. resize: The reallocation function, compatible with realloc. Reallocation
+ *             always fails when this is NULL.
  * RETURN VALUE: 0 on success, or -1 if the given allocation function failed to
  * allocate the stack of size stacksiz. */
-int json_alloc(json_reader *reader, size_t stacksiz,
+int json_alloc(json_reader *reader,
+	void *stack, size_t stacksiz,
 	void *(*alloc)(size_t),
 	void  (*dealloc)(void *),
 	void *(*resize)(void *, size_t));
