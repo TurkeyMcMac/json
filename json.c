@@ -605,6 +605,7 @@ static int escape_char(json_reader *reader, struct json_string *str,
 error_esc:
 	set_error(reader, JSON_ERROR_ESCAPE);
 error:
+	reexamine_char(reader);
 	return -1;
 }
 
