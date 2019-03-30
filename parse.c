@@ -47,6 +47,7 @@ void debug_print(int *indent, struct json_item *item)
 
 int main(int argc, char *argv[])
 {
+	int status = 0;
 	char buf[BUFSIZ];
 	int completely_empty = 1;
 	int last_was_empty;
@@ -71,7 +72,8 @@ int main(int argc, char *argv[])
 	for (;;) {
 		last_was_empty = item.type == JSON_EMPTY;
 		if (json_read_item(&rdr, &item) < 0) {
-			return item.type;
+			status = item.type;
+			goto release;
 		}
 		if (item.type == JSON_EMPTY) {
 			if (last_was_empty) break;
@@ -79,7 +81,12 @@ int main(int argc, char *argv[])
 			completely_empty = 0;
 		}
 		if (is_printing) debug_print(&indent, &item);
+		free(item.key.bytes);
+		if (item.type == JSON_STRING) free(item.val.str.bytes);
 	}
-	if (completely_empty) return ERROR_COMPLETELY_EMPTY;
-	return 0;
+	if (completely_empty) status = ERROR_COMPLETELY_EMPTY;
+release:
+	json_free(&rdr);
+	fclose(file);
+	return status;
 }
