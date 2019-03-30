@@ -11,7 +11,7 @@ char buf[BUFSIZ];
 json_reader rdr;
 struct json_item item;
 
-json_alloc(&rdr, 8, malloc, free, realloc);
+json_alloc(&rdr, NULL, 8, malloc, free, realloc);
 json_source_file(&rdr, buf, sizeof(buf), file);
 do {
 	if (json_read_item(&rdr, &item) < 0) {
