@@ -611,15 +611,15 @@ error:
 
 /* Parse a quoted string. This DOES check that the first character is '"'. On
  * success, 0 is returned and str has been allocated. On failure, -1 is returned
- * and the error is set. */
+ * and the error is set. The string is then freed. */
 static int parse_string(json_reader *reader, struct json_string *str)
 {
 	int ch;
 	size_t cap = 16;
-	NEXT_CHAR(reader, ch, goto error);
+	NEXT_CHAR(reader, ch, return -1);
 	if (ch != '"') goto error_expected_string;
 	str->bytes = alloc(reader, cap);
-	if (!str->bytes) goto error;
+	if (!str->bytes) return -1;
 	str->len = 0;
 	while ((ch = next_char(reader)) != '"') {
 		if (ch < 0) {
@@ -642,17 +642,18 @@ static int parse_string(json_reader *reader, struct json_string *str)
 
 error_expected_string:
 	set_error(reader, JSON_ERROR_EXPECTED_STRING);
-	return -1;
+	goto error;
 
 error_unclosed_quote:
 	set_error(reader, JSON_ERROR_UNCLOSED_QUOTE);
-	return -1;
+	goto error;
 
 error_control_char:
 	set_error(reader, JSON_ERROR_CONTROL_CHAR);
-	return -1;
+	goto error;
 
 error:
+	reader->dealloc(str->bytes);
 	return -1;
 }
 
