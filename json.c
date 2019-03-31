@@ -479,7 +479,7 @@ static long utf16_pair_to_codepoint(unsigned high, unsigned low)
 
 /* Converts a unicode codepoint (cp) to a UTF-8 code unit in buf. Returns the
  * size of the code unit in bytes. */
-size_t codepoint_to_utf8(long cp, char buf[4])
+static size_t codepoint_to_utf8(long cp, char buf[4])
 {
 	if (cp <= 0x7F) {
 		buf[0] = cp;
