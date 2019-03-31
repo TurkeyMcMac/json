@@ -117,6 +117,12 @@ void json_source_fd(json_reader *reader, char *buf, size_t bufsiz, int fd)
 }
 #endif /* JSON_WITH_FD */
 
+void json_get_buf(const json_reader *reader, char **buf, size_t *bufsiz)
+{
+	*buf = reader->buf;
+	*bufsiz = reader->bufsiz;
+}
+
 void json_free(json_reader *reader)
 {
 	reader->dealloc(reader->stack);

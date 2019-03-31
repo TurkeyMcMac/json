@@ -1,6 +1,7 @@
 #include "json.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 #define ERROR_COMPLETELY_EMPTY  64
 #define ERROR_CLI               65
@@ -73,6 +74,21 @@ int main(int argc, char *argv[])
 		last_was_empty = item.type == JSON_EMPTY;
 		if (json_read_item(&rdr, &item) < 0) {
 			status = item.type;
+			if (is_printing) {
+				char *buffer;
+				size_t bufsiz;
+				json_get_buf(&rdr, &buffer, &bufsiz);
+				fprintf(stderr, "Error at: ");
+				if (item.val.erridx >= bufsiz) {
+					fprintf(stderr, "EOF\n");
+				} else {
+					char ch = buffer[item.val.erridx];
+					fprintf(stderr,
+						iscntrl(ch) || !isascii(ch) ?
+							"%02X\n" : "'%c'\n",
+						(unsigned char)ch);
+				}
+			}
 			goto release;
 		}
 		if (item.type == JSON_EMPTY) {
