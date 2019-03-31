@@ -14,10 +14,6 @@ closedir(DIR);
 foreach my $file (@files) {
 	my $pid = fork();
 	if ($pid == 0) {
-		$SIG{'TERM'} = sub {
-			# No core dump.
-			exit 128 + 15;
-		};
 		chdir $dirname;
 		exec("../parse", $file);
 	} elsif ($pid  > 0) {
