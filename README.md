@@ -22,6 +22,8 @@ do {
 } while (item.type != JSON_EMPTY);
 ```
 
+For a more in-depth example, see `parse.c`.
+
 ## Tests
 I got the tests from [this repository](https://github.com/nst/JSONTestSuite),
 which can be found under the `tests` directory here, or the `test_parsing`
