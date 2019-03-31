@@ -24,6 +24,9 @@ do {
 
 For a more in-depth example, see `parse.c`.
 
+This library reads and writes UTF-8, but you can easily adapt it to other
+encodings if you wish because of the flexibility of the input source.
+
 ## Tests
 I got the tests from [this repository](https://github.com/nst/JSONTestSuite),
 which can be found under the `tests` directory here, or the `test_parsing`

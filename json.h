@@ -199,6 +199,7 @@ int json_alloc(json_reader *reader,
  *                  new buffer should be allocated using the given allocation
  *                  routine beforehand, perhaps with the size pointed to in
  *                  bufsiz. The function is free to change the buffer pointer.
+ *                  The buffer must be filled with UTF-8.
  *          2. bufsiz: The pointer to the size of the buffer. This is the size
  *                     of the buffer, and its value can be changed.
  *          3. ctx: The pointer which was passed to json_source.
