@@ -6,6 +6,7 @@
 #define ERROR_COMPLETELY_EMPTY  64
 #define ERROR_CLI               65
 
+/* This prints out an item in a format similar to JSON. */
 void debug_print(int *indent, struct json_item *item)
 {
 	if (*indent > 0) printf("%*c", *indent * 2, ' ');
