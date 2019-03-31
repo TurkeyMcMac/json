@@ -668,6 +668,7 @@ error_unclosed_quote:
 	goto error;
 
 error_control_char:
+	reexamine_char(reader);
 	set_error(reader, JSON_ERROR_CONTROL_CHAR);
 	goto error;
 
