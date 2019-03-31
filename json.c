@@ -551,9 +551,9 @@ static int escape_char(json_reader *reader, struct json_string *str,
 	case 'u':
 		read = next_chars(reader, buf, 4);
 		if (read < 0) goto error;
-		if (read < 4) goto error_esc;
+		if (read < 4) goto error;
 		utf16[0] = hex_short(buf);
-		if (utf16[0] < 0) goto error_esc;
+		if (utf16[0] < 0) goto error;
 		codepoint = utf16_to_codepoint(utf16[0]);
 		if (is_high_surrogate(utf16[0])) {
 			NEXT_CHAR(reader, ch, goto error);
@@ -565,9 +565,9 @@ static int escape_char(json_reader *reader, struct json_string *str,
 					read = next_chars(reader, buf,
 						4);
 					if (read < 0) goto error;
-					if (read < 4) goto error_esc;
+					if (read < 4) goto error;
 					utf16[1] = hex_short(buf);
-					if (utf16[1] < 0) goto error_esc;
+					if (utf16[1] < 0) goto error;
 					if (is_low_surrogate(utf16[1])) {
 						codepoint =
 							utf16_pair_to_codepoint(
@@ -597,14 +597,13 @@ static int escape_char(json_reader *reader, struct json_string *str,
 		}
 		return 0;
 	default:
-		goto error_esc;
+		goto error;
 	}
 	if (push_byte(reader, &str->bytes, &str->len, cap, ch)) goto error;
 	return 0;
 
-error_esc:
-	set_error(reader, JSON_ERROR_ESCAPE);
 error:
+	set_error(reader, JSON_ERROR_ESCAPE);
 	reexamine_char(reader);
 	return -1;
 }
