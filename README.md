@@ -24,8 +24,6 @@ do {
 
 Here's the same example using zlib GZip decompression:
 ```c
-/* Compile with -DJSON_WITH_STDIO */
-
 #include <zlib.h>
 
 static int refill_gz(char **buf, size_t *size, void *ctx)
