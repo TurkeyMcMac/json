@@ -1,10 +1,14 @@
 #include "json.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
 
 #define ERROR_COMPLETELY_EMPTY  64
 #define ERROR_CLI               65
+
+static int is_printable(int ch)
+{
+	return ch >= 0x20 && ch < 0x7F;
+}
 
 /* This prints out an item in a format similar to JSON. */
 void debug_print(int *indent, struct json_item *item)
@@ -85,8 +89,8 @@ int main(int argc, char *argv[])
 				} else {
 					char ch = buffer[item.val.erridx];
 					fprintf(stderr,
-						iscntrl(ch) || !isascii(ch) ?
-							"%02X\n" : "'%c'\n",
+						is_printable(ch) ?
+						"%02X\n" : "'%c'\n",
 						(unsigned char)ch);
 				}
 			}

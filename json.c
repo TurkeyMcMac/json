@@ -1,5 +1,4 @@
 #include "json.h"
-#include <ctype.h>
 #include <math.h>
 #include <string.h>
 #ifdef JSON_WITH_FD
@@ -143,11 +142,23 @@ enum frame {
 	FRAME_MAP
 };
 
-/* Custom version of isspace which ignores \f as per the spec. */
+/* Custom versions of ctype functions, compliant to JSON. */
 static int is_space(int ch)
 {
 	return ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r'
 		|| ch == '\v';
+}
+static int is_digit(int ch)
+{
+	return ch >= '0' && ch <= '9';
+}
+static int to_digit(int ch)
+{
+	return ch - '0';
+}
+static int to_lower(int ch)
+{
+	return ch | 0x20;
 }
 
 /* Returns whether an error has been set. */
@@ -356,13 +367,13 @@ static int parse_number(json_reader *reader, struct json_item *result)
 	if (ch == '0') {
 		status = 0;
 		NEXT_CHAR(reader, ch, goto finish);
-	} else if (isdigit(ch)) {
+	} else if (is_digit(ch)) {
 		status = 0;
 		do {
 			num *= 10;
-			num += ch - '0';
+			num += to_digit(ch);
 			NEXT_CHAR(reader, ch, goto finish);
-		} while (isdigit(ch));
+		} while (is_digit(ch));
 	} else {
 		goto error;
 	}
@@ -370,15 +381,15 @@ static int parse_number(json_reader *reader, struct json_item *result)
 		double fraction = 0.0;
 		status = JSON_ERROR_NUMBER_FORMAT;
 		NEXT_CHAR(reader, ch, goto error);
-		if (isdigit(ch)) {
+		if (is_digit(ch)) {
 			status = 0;
 			do {
-				fraction += ch - '0';
+				fraction += to_digit(ch);
 				fraction /= 10;
 				NEXT_CHAR(reader, ch,
 					num += fraction;
 					goto finish);
-			} while (isdigit(ch));
+			} while (is_digit(ch));
 		} else {
 			goto error;
 		}
@@ -397,10 +408,10 @@ static int parse_number(json_reader *reader, struct json_item *result)
 			NEXT_CHAR(reader, ch, goto error);
 			break;
 		}
-		while (isdigit(ch)) {
+		while (is_digit(ch)) {
 			status = 0;
 			exponent *= 10;
-			exponent += ch - '0';
+			exponent += to_digit(ch);
 			NEXT_CHAR(reader, ch,
 				num *= pow(expsign * 10, exponent);
 				goto finish;
@@ -522,10 +533,10 @@ static long hex_short(const char hex[4])
 	unsigned shift = 0;
 	long i;
 	for (i = 3, shift = 0; i >= 0; --i, shift += 4) {
-		int dig = tolower(hex[i]);
+		int dig = to_lower(hex[i]);
 		long nibble;
-		if (dig >= '0' && dig <= '9') nibble = dig - '0';
-		else if (dig >= 'a' && dig <= 'f') nibble = 10 + dig - 'a';
+		if (is_digit(dig)) nibble = to_digit(dig);
+		else if (dig >= 'a' && dig <= 'f') nibble = 10 + to_digit(dig);
 		else return -1;
 		num |= nibble << shift;
 	}
