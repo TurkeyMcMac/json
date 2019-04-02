@@ -1,6 +1,10 @@
 #ifndef JSON_H_
 #define JSON_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stddef.h>
 #ifdef JSON_WITH_STDIO
 #include <stdio.h>
@@ -251,5 +255,9 @@ int json_read_item(json_reader *reader, struct json_item *result);
 
 /* Deallocate all memory associated with the given parser. */
 void json_free(json_reader *reader);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* JSON_H_ */
