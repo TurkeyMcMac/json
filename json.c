@@ -75,7 +75,12 @@ void json_source(json_reader *reader,
 
 void json_source_string(json_reader *reader, const char *str, size_t len)
 {
-	json_source(reader, (char *)str, len, NULL, NULL);
+	reader->ctx = NULL;
+	reader->buf = (char *)str;
+	reader->bufsiz = len;
+	reader->head = 0;
+	reader->refill = refill_dont;
+	reader->flags = SOURCE_DEPLETED;
 }
 
 #ifdef JSON_WITH_STDIO
@@ -116,6 +121,12 @@ void json_source_fd(json_reader *reader, char *buf, size_t bufsiz, int fd)
 	json_source(reader, buf, bufsiz, (void *)(intptr_t)fd, refill_fd);
 }
 #endif /* JSON_WITH_FD */
+
+void json_get_buf(const json_reader *reader, char **buf, size_t *bufsiz)
+{
+	*buf = reader->buf;
+	*bufsiz = reader->bufsiz;
+}
 
 void json_free(json_reader *reader)
 {
@@ -531,11 +542,23 @@ static long hex_short(const char hex[4])
 static int escape_char(json_reader *reader, struct json_string *str,
 	size_t *cap)
 {
-	int read_extra_cp = 0, read_extra_escape = 0;
+	/* Whether an extra hex-escaped codepoint was read which did not match
+	 * the proceeding high surrogate: */
+	int read_extra_cp = 0;
+	/* Whether an extra non-hex escape was read: */
+	int read_extra_escape = 0;
+	/* The UTF-16 code units read (up to 2 are possible): */
 	long utf16[2] = {-1, -1};
-	long codepoint, extracp = -1;
+	/* The unicode codepoint if one was read, possibly from a surrogate
+	 * pair: */
+	long codepoint;
+	/* The extra unpaired codepoint if it was read (-1 otherwise): */
+	long extracp = -1;
+	/* The UTF-8 version of a codepoint if it was read: */
 	char utf8[4];
+	/* The buffer of hex digits: */
 	char buf[4];
+	/* The amount some call to next_chars read: */
 	long read;
 	int ch = next_char(reader);
 	if (ch < 0) goto error;
@@ -546,38 +569,46 @@ static int escape_char(json_reader *reader, struct json_string *str,
 	case 'r': ch = '\r'; break;
 	case 't': ch = '\t'; break;
 	case '"': ch =  '"'; break;
-	case'\\':            break;
-	case '/':            break;
+	case'\\':/*Same as */break;
+	case '/':/*escaped.*/break;
 	case 'u':
 		read = next_chars(reader, buf, 4);
 		if (read < 0) goto error;
-		if (read < 4) goto error_esc;
+		if (read < 4) goto error;
 		utf16[0] = hex_short(buf);
-		if (utf16[0] < 0) goto error_esc;
+		if (utf16[0] < 0) goto error;
 		codepoint = utf16_to_codepoint(utf16[0]);
 		if (is_high_surrogate(utf16[0])) {
+			/* It wants a partner. */
 			NEXT_CHAR(reader, ch, goto error);
 			if (ch != '\\') {
+				/* No partner; only normal chars were found: */
 				reexamine_char(reader);
 			} else {
+				/* Escape follows. */
 				NEXT_CHAR(reader, ch, goto error);
 				if (ch == 'u') {
+					/* Hex escape follows. */
 					read = next_chars(reader, buf,
 						4);
 					if (read < 0) goto error;
-					if (read < 4) goto error_esc;
+					if (read < 4) goto error;
 					utf16[1] = hex_short(buf);
-					if (utf16[1] < 0) goto error_esc;
+					if (utf16[1] < 0) goto error;
 					if (is_low_surrogate(utf16[1])) {
+						/* Partner found. */
 						codepoint =
 							utf16_pair_to_codepoint(
 							utf16[0], utf16[1]);
 					} else {
+						/* Extra codepoint found. */
 						read_extra_cp = 1;
 						extracp = utf16_to_codepoint(
 								utf16[1]);
 					}
 				} else {
+					/* Extra other escape was found, will be
+					 * parsed below. (read_extra_escape) */
 					reexamine_char(reader);
 					read_extra_escape = 1;
 				}
@@ -590,21 +621,20 @@ static int escape_char(json_reader *reader, struct json_string *str,
 					utf8, codepoint_to_utf8(extracp, utf8)))
 				goto error;
 		} else if (read_extra_escape) {
-			/* This will only every recurse once, since it can only
-			 * do so for \uXXXX, but that is handled non-
+			/* This will only every recurse once, since this can
+			 * only occur for \uXXXX, but that is handled non-
 			 * recursively. */
 			if (escape_char(reader, str, cap)) goto error;
 		}
 		return 0;
 	default:
-		goto error_esc;
+		goto error;
 	}
 	if (push_byte(reader, &str->bytes, &str->len, cap, ch)) goto error;
 	return 0;
 
-error_esc:
-	set_error(reader, JSON_ERROR_ESCAPE);
 error:
+	set_error(reader, JSON_ERROR_ESCAPE);
 	reexamine_char(reader);
 	return -1;
 }
@@ -649,6 +679,7 @@ error_unclosed_quote:
 	goto error;
 
 error_control_char:
+	reexamine_char(reader);
 	set_error(reader, JSON_ERROR_CONTROL_CHAR);
 	goto error;
 

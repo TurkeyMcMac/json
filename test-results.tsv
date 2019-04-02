@@ -167,7 +167,7 @@ n_string_no_quotes_with_bad_escape.json	SUCCEEDED	011	TOKEN
 n_string_single_doublequote.json	SUCCEEDED	015	UNCLOSED_QUOTE
 n_string_single_quote.json	SUCCEEDED	011	TOKEN
 n_string_single_string_no_double_quotes.json	SUCCEEDED	011	TOKEN
-n_string_start_escape_unclosed.json	SUCCEEDED	014	BRACKETS
+n_string_start_escape_unclosed.json	SUCCEEDED	016	ESCAPE
 n_string_unescaped_crtl_char.json	SUCCEEDED	017	CONTROL_CHAR
 n_string_unescaped_newline.json	SUCCEEDED	017	CONTROL_CHAR
 n_string_unescaped_tab.json	SUCCEEDED	017	CONTROL_CHAR

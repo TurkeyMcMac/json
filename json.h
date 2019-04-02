@@ -126,7 +126,8 @@ union json_data {
 	 * a 0 is false. */
 	int                boolean;
 	/* The index into the data buffer where an error occurred (corresponding
-	 * to any JSON_ERROR_* type.) */
+	 * to any JSON_ERROR_* type.) THIS MAY BE OUTSIDE THE RANGE OF THE
+	 * BUFFER, in which case the error is due to a premature end-of-file. */
 	size_t             erridx;
 };
 
@@ -154,6 +155,7 @@ struct json_item {
  *     (example: json_source_string(&reader, "[1,2,true]", 10))
  *   - json_source_file is for reading stdio files
  *     (example: json_source_file(&reader, buf, sizeof(buf), file))
+ *  3. json_get_buf might be called at some point.
  * One function of each type should be called in that order.
  * See below for details.
  *
@@ -201,6 +203,7 @@ int json_alloc(json_reader *reader,
  *                  new buffer should be allocated using the given allocation
  *                  routine beforehand, perhaps with the size pointed to in
  *                  bufsiz. The function is free to change the buffer pointer.
+ *                  The buffer must be filled with UTF-8.
  *          2. bufsiz: The pointer to the size of the buffer. This is the size
  *                     of the buffer, and its value can be changed.
  *          3. ctx: The pointer which was passed to json_source.
@@ -252,6 +255,15 @@ void json_source_fd(json_reader *reader, char *buf, size_t bufsiz, int fd);
  * failure, result->type will be set to some JSON_ERROR_* or whatever a failed
  * call the the given refill function returned. */
 int json_read_item(json_reader *reader, struct json_item *result);
+
+/* Get the parser's current buffer and its size. This is meant for pinpointing
+ * on what character an error occurred.
+ * PARAMETERS:
+ *  1. reader: The parser.
+ *  2. buf: The pointer which will be set to the buffer pointer.
+ *  3. bufsiz: The pointer which will be set to the buffer size.
+ */
+void json_get_buf(const json_reader *reader, char **buf, size_t *bufsiz);
 
 /* Deallocate all memory associated with the given parser. */
 void json_free(json_reader *reader);
