@@ -656,6 +656,8 @@ error:
 static int parse_string(json_reader *reader, struct json_string *str)
 {
 	int ch;
+	size_t shrink_to;
+	char *oldbytes;
 	size_t cap = 16;
 	NEXT_CHAR(reader, ch, return -1);
 	if (ch != '"') goto error_expected_string;
@@ -680,11 +682,10 @@ static int parse_string(json_reader *reader, struct json_string *str)
 		}
 	}
 	/* resize() might return NULL on success if shrunk to size zero: */
-	if (str->len > 0) {
-		char *oldbytes = str->bytes;
-		str->bytes = reader->resize(str->bytes, str->len);
-		if (!str->bytes) str->bytes = oldbytes;
-	}
+	shrink_to = str->len > 0 ? str->len : 1;
+	oldbytes = str->bytes;
+	str->bytes = reader->resize(str->bytes, shrink_to);
+	if (!str->bytes) str->bytes = oldbytes;
 	return 0;
 
 error_expected_string:
