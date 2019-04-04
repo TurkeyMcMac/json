@@ -679,6 +679,12 @@ static int parse_string(json_reader *reader, struct json_string *str)
 				goto error;
 		}
 	}
+	/* resize() might return NULL on success if shrunk to size zero: */
+	if (str->len > 0) {
+		char *oldbytes = str->bytes;
+		str->bytes = reader->resize(str->bytes, str->len);
+		if (!str->bytes) str->bytes = oldbytes;
+	}
 	return 0;
 
 error_expected_string:
