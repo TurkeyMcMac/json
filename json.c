@@ -201,7 +201,7 @@ static int push_byte(json_reader *reader, char **bytes,
 	size_t *len, size_t *cap, int ch)
 {
 	if (*len >= *cap) {
-		size_t new_cap = *cap + *cap / 2;
+		size_t new_cap = *cap + *cap / 2 + 1;
 		char *new_bytes = reader->resize(*bytes, new_cap);
 		if (!new_bytes) {
 			set_error(reader, JSON_ERROR_MEMORY);
