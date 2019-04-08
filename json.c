@@ -584,7 +584,6 @@ static int escape_char(json_reader *reader, struct json_string *str,
 	case '/':/*escaped.*/break;
 	case 'u':
 		read = next_chars(reader, buf, 4);
-		if (read < 0) goto error;
 		if (read < 4) goto error;
 		utf16[0] = hex_short(buf);
 		if (utf16[0] < 0) goto error;
