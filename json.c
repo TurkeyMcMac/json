@@ -384,21 +384,23 @@ static int parse_number(json_reader *reader, struct json_item *result)
 	}
 	if (ch == '.') {
 		double fraction = 0.0;
+		long n_digits = 0;
 		status = JSON_ERROR_NUMBER_FORMAT;
 		NEXT_CHAR(reader, ch, goto error);
 		if (is_digit(ch)) {
 			status = 0;
 			do {
+				n_digits++;
+				fraction *= 10;
 				fraction += to_digit(ch);
-				fraction /= 10;
 				NEXT_CHAR(reader, ch,
-					num += fraction;
+					num += fraction / pow(10, n_digits);
 					goto finish);
 			} while (is_digit(ch));
 		} else {
 			goto error;
 		}
-		num += fraction;
+		num += fraction / pow(10, n_digits);
 	}
 	if (ch == 'e' || ch == 'E') {
 		long expsign = 1;
@@ -660,7 +662,6 @@ error:
 static int parse_string(json_reader *reader, struct json_string *str)
 {
 	int ch;
-	size_t shrink_to;
 	char *oldbytes;
 	size_t cap = 16;
 	NEXT_CHAR(reader, ch, return -1);
@@ -680,11 +681,11 @@ static int parse_string(json_reader *reader, struct json_string *str)
 				goto error;
 		}
 	}
-	/* resize() might return NULL on success if shrunk to size zero: */
-	shrink_to = str->len > 0 ? str->len : 1;
+	if (push_byte(reader, &str->bytes, &str->len, &cap, '\0')) goto error;
 	oldbytes = str->bytes;
-	str->bytes = reader->resize(str->bytes, shrink_to);
+	str->bytes = reader->resize(str->bytes, str->len);
 	if (!str->bytes) str->bytes = oldbytes;
+	--str->len; /* Because of the NUL terminator */
 	return 0;
 
 error_expected_string:
