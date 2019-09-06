@@ -27,7 +27,13 @@ typedef struct {
 	/* The data buffer size given by refill. */
 	size_t  bufsiz;
 	/* The pointer passed to json_source. */
-	void    *ctx;
+	union {
+		/* The pointer version. */
+		void *p;
+		/* The fd version for use when the source is an fd. This is a
+		 * hack to make things more portable. */
+		int   fd;
+	} ctx;
 	/* The index into the buffer of the next byte to be read. */
 	size_t  head;
 	/* The stack of list and map brackets. */
