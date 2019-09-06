@@ -270,6 +270,17 @@ void json_get_buf(const json_reader *reader, char **buf, size_t *bufsiz);
 /* Get a pointer to the parser's context. This can be modified. */
 void **json_get_ctx(json_reader *reader);
 
+/* Check the last reading error. If none occurred, 0 is returned and the given
+ * pointers contain no meaningful information. If there has been an error, the
+ * code and index** are put into the appropriate pointers. If the second or
+ * third argument is NULL, that pointer will never be dereferenced and therefore
+ * will never be set.
+ *
+ * ** See the erridx member of union json_data for details. */
+int json_get_last_error(const json_reader *reader,
+	enum json_type *code,
+	size_t *erridx);
+
 /* Deallocate all memory associated with the given parser. */
 void json_free(json_reader *reader);
 

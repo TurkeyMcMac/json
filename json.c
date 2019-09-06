@@ -167,28 +167,26 @@ static int to_lower(int ch)
 }
 
 /* Returns whether an error has been set. */
-static int has_error(json_reader *reader)
+static int has_error(const json_reader *reader)
 {
 	return (reader->flags & 0xFF) != 0;
+}
+
+int json_get_last_error(const json_reader *reader,
+	enum json_type *code, size_t *erridx)
+{
+	if (has_error(reader)) {
+		if (erridx) *erridx = reader->head;
+		if (code) *code = reader->flags & 0xFF;
+		return 1;
+	}
+	return 0;
 }
 
 /* Set error indicator if it has yet to be set. */
 static void set_error(json_reader *reader, enum json_type err)
 {
 	if (!has_error(reader)) reader->flags |= err;
-}
-
-/* Clear the error indicator. */
-static void clear_error(json_reader *reader)
-{
-	reader->flags &= ~0xFF;
-}
-
-/* Set error information in the item to that in the reader. */
-static void carry_error(json_reader *from, struct json_item *to)
-{
-	to->type = from->flags & 0xFF;
-	to->val.erridx = from->head;
 }
 
 /* Allocate using the reader's function or set error on failure. */
@@ -794,6 +792,7 @@ static int parse_colon(json_reader *reader)
 
 int json_read_item(json_reader *reader, struct json_item *result)
 {
+	if (has_error(reader)) return -1;
 	result->type = JSON_EMPTY;
 	result->key.len = 0;
 	result->key.bytes = NULL;
@@ -856,7 +855,6 @@ int json_read_item(json_reader *reader, struct json_item *result)
 	return 0;
 
 error:
-	carry_error(reader, result);
-	clear_error(reader);
+	json_get_last_error(reader, &result->type, &result->val.erridx);
 	return -1;
 }
