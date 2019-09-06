@@ -273,7 +273,11 @@ int json_read_item(json_reader *reader, struct json_item *result);
  */
 void json_get_buf(const json_reader *reader, char **buf, size_t *bufsiz);
 
-/* Get a pointer to the parser's context. This can be modified. */
+/* Get a pointer to the parser's context. If the context was set using
+ * json_source, the return value is what the context was last set to and it can
+ * be modified. If any other json_source_* function was used instead, the
+ * contents are of unspecified value and cannot be modified. Avoid this function
+ * unless you used plain old json_source. */
 void **json_get_ctx(json_reader *reader);
 
 /* Check the last reading error. If none occurred, 0 is returned and the given
