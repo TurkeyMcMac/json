@@ -134,6 +134,11 @@ void json_get_buf(const json_reader *reader, char **buf, size_t *bufsiz)
 	*bufsiz = reader->bufsiz;
 }
 
+size_t json_get_num_used(const json_reader *reader)
+{
+	return reader->head;
+}
+
 void **json_get_ctx(json_reader *reader)
 {
 	return &reader->ctx.p;
