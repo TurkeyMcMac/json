@@ -805,7 +805,7 @@ static int parse_colon(json_reader *reader)
 
 int json_read_item(json_reader *reader, struct json_item *result)
 {
-	if (has_error(reader)) return -1;
+	if (has_error(reader)) goto error;
 	result->type = JSON_EMPTY;
 	result->key.len = 0;
 	result->key.bytes = NULL;
