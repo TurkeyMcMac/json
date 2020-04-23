@@ -1,4 +1,5 @@
 #include "json.h"
+#include <limits.h>
 #include <math.h>
 #include <string.h>
 #ifdef JSON_WITH_FD
@@ -428,6 +429,11 @@ static int parse_number(json_reader *reader, struct json_item *result)
 		}
 		while (is_digit(ch)) {
 			status = 0;
+			if (exponent > (LONG_MAX - 9) / 10) {
+				/* Avoid undefined signed overflow. */
+				status = JSON_ERROR_NUMBER_FORMAT;
+				goto error;
+			}
 			exponent *= 10;
 			exponent += to_digit(ch);
 			NEXT_CHAR(reader, ch,
