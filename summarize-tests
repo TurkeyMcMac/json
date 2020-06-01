@@ -19,8 +19,10 @@ while (my $line = <$input>) {
 		++$n_tests;
 		if ($2 eq "TIMED OUT") {
 			++$n_timed_out;
+			++$n_failures;
 		} elsif ($1 eq "i") {
 			++$n_ignored;
+			++$n_successes;
 		} elsif ($2 eq "SUCCEEDED") {
 			++$n_successes;
 		} else {
@@ -32,6 +34,6 @@ print "Total tests: $n_tests\n";
 if ($n_tests > 0) {
 	report_stat("Successes", $n_successes, $n_tests);
 	report_stat("Failures", $n_failures, $n_tests);
-	report_stat("Timed out", $n_timed_out, $n_tests);
-	report_stat("Ignored", $n_ignored, $n_tests);
+	report_stat("Ignored (success)", $n_ignored, $n_tests);
+	report_stat("Timed out (failure)", $n_timed_out, $n_tests);
 }
